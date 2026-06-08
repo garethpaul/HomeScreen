@@ -108,6 +108,9 @@ def main():
     require("FABRIC_API_KEY" in project and "FABRIC_BUILD_SECRET" in project,
             "Fabric build phase must use local environment placeholders",
             failures)
+    require("showEnvVarsInLog = 0;" in project,
+            "Fabric build phase must suppress environment variable logging",
+            failures)
     require(not re.search(r"Fabric\.framework/run\s+[A-Za-z0-9]{20,}\s+[A-Za-z0-9]{20,}", project),
             "Fabric build phase must not include literal API key or build secret arguments",
             failures)

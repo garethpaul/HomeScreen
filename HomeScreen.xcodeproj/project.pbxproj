@@ -298,6 +298,7 @@
 			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
+			showEnvVarsInLog = 0;
 			shellPath = /bin/sh;
 			shellScript = "if [ -n \"$FABRIC_API_KEY\" ] && [ -n \"$FABRIC_BUILD_SECRET\" ]; then\n  ./Fabric.framework/run \"$FABRIC_API_KEY\" \"$FABRIC_BUILD_SECRET\"\nelse\n  echo \"Skipping Fabric run: set FABRIC_API_KEY and FABRIC_BUILD_SECRET locally.\"\nfi\n";
 		};
