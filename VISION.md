@@ -34,6 +34,11 @@ Contribution rules:
 
 ## Security And Privacy
 
+Canonical security policy and reporting:
+
+- [`SECURITY.md`](SECURITY.md)
+
+
 Home screen screenshots and photo-library contents can reveal personal
 information. The app should keep sharing user-initiated and avoid uploading or
 logging images without explicit action.
