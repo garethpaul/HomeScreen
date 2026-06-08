@@ -1,5 +1,8 @@
 ## HomeScreen Vision
 
+This document explains the current state and direction of the project.
+Project overview and developer docs: [`README.md`](README.md)
+
 HomeScreen is an iOS app for sharing a user's home screen image and browsing
 posts tagged with `#Homescreen`.
 
