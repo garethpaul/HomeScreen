@@ -40,7 +40,7 @@ logging images without explicit action.
 
 Twitter credentials and session data must remain out of source control.
 
-## What We Will Not Merge For Now
+## What We Will Not Merge (For Now)
 
 - Hardcoded Twitter/Fabric credentials
 - Silent screenshot upload or background photo access
