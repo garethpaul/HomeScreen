@@ -299,7 +299,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "./Fabric.framework/run abb870ac2c6cd77fc0a3ee166f786a86748f4eb9 47d331d25396fd56e08c5c5891c16a003ba5647e584bf8fc07feb0e8ae92ab92";
+			shellScript = "if [ -n \"$FABRIC_API_KEY\" ] && [ -n \"$FABRIC_BUILD_SECRET\" ]; then ./Fabric.framework/run \"$FABRIC_API_KEY\" \"$FABRIC_BUILD_SECRET\"; else echo \"Skipping Fabric upload; set FABRIC_API_KEY and FABRIC_BUILD_SECRET locally.\"; fi";
 		};
 /* End PBXShellScriptBuildPhase section */
 

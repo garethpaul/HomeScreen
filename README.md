@@ -56,6 +56,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 ## Configuration and Secrets
 
 - Detected references to Twitter. Keep API keys, OAuth credentials, tokens, and account-specific values in local configuration only.
+- The Xcode Fabric run script reads `FABRIC_API_KEY` and `FABRIC_BUILD_SECRET` from the developer environment.
+- Do not commit real Fabric, Twitter, Crashlytics, signing, or provisioning credentials. Rotate any value that was previously committed to this repository.
 
 ## Security and Privacy Notes
 
