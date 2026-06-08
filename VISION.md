@@ -20,10 +20,11 @@ Priority:
 - Keep Twitter REST search and upload behavior easy to inspect
 - Avoid committing Fabric/Twitter credentials, signing material, or private images
 - Maintain security policy and legacy project context
+- Keep `scripts/check-baseline.py` passing for credential placeholders, plist
+  permissions, Swift source guardrails, and static project inventory
 
 Next priorities:
 
-- Add README setup, permissions, and verification instructions
 - Move Twitter configuration into documented local settings
 - Modernize Swift, photo APIs, and Twitter/Fabric dependencies in a dedicated pass
 - Add tests or manual checks for image selection and share behavior
@@ -46,6 +47,12 @@ information. The app should keep sharing user-initiated and avoid uploading or
 logging images without explicit action.
 
 Twitter credentials and session data must remain out of source control.
+
+Current baseline: `make check` runs `scripts/check-baseline.py` without Xcode.
+It verifies that the Fabric build phase uses local placeholders, the
+photo-library permission describes screenshot sharing, uploads require a loaded
+image, raw upload responses are not logged, and the legacy project/framework
+inventory remains visible.
 
 ## What We Will Not Merge (For Now)
 

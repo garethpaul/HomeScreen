@@ -48,7 +48,6 @@ func UploadMedia(media: NSData, completion: (result: [String]) -> Void) {
 
                         // Iterate through JSON response and append the values to the TweetArray
 
-                        println(json)
                         // complete this magical request
                         //completion(result: tweetArray)
                     }
@@ -70,6 +69,5 @@ func UploadMedia(media: NSData, completion: (result: [String]) -> Void) {
         
     }
 }
-
 
 

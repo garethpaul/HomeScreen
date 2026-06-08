@@ -32,10 +32,14 @@ Helpful reports include:
 - Review found file, document, data, or media parsing flows; changes in those areas should receive security-focused review before merge.
 - Review found database, model, query, or persistence-related code; changes in those areas should receive security-focused review before merge.
 - No primary dependency manifest was detected in the repository root. If dependencies are added later, include a manifest and prefer reproducible installation instructions.
+- Fabric credentials must be supplied locally through `FABRIC_API_KEY` and `FABRIC_BUILD_SECRET`. Do not commit real Fabric, Twitter, signing, screenshot, xcconfig, or environment values.
+- `make check` runs a static privacy baseline that guards against credential literals, missing photo-library purpose text, unsafe empty-screenshot uploads, raw Twitter upload-response logging, plist drift, and first-party Swift guardrail drift when Xcode is unavailable.
 
 ## Mobile Privacy Notes
 
 If this project requests device permissions such as location, camera, microphone, contacts, Bluetooth, health data, or local storage access, reports should describe the permission involved and whether sensitive data can be accessed, persisted, or transmitted unexpectedly. Please avoid testing against real third-party user data or accounts you do not control.
+
+Home screen screenshots and photo-library contents can reveal private apps, conversations, accounts, or location hints. Photo-library access should remain user-visible, uploads should remain user-initiated, and upload responses or image data should not be logged.
 
 ## Dependency and Supply Chain Security
 

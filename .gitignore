@@ -17,3 +17,7 @@ DerivedData
 *.hmap
 *.ipa
 *.xcuserstate
+*.local.xcconfig
+*.secrets.xcconfig
+.env
+.env.*

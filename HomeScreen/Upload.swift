@@ -46,7 +46,6 @@ func UploadMedia(data: NSData, completion: (result: String) -> Void) {
                 NSJSONSerialization.JSONObjectWithData(data,
                     options: nil,
                     error: &jsonError)
-                println(json)
                 if let media_id_string = json!["media_id_string"] as?String{
 
                     // Return media_id_string back so that the next step of magic can occur.
@@ -62,6 +61,5 @@ func UploadMedia(data: NSData, completion: (result: String) -> Void) {
         println("error \(clientError)")
     }
 }
-
 
 

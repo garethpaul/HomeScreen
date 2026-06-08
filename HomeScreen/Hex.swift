@@ -5,7 +5,7 @@
 import Foundation
 import UIKit
 
-// Concerts a hex string into a UIColor
+// Converts a hex string into a UIColor
 //
 func toColor (hex:String) -> UIColor {
     var cString:String = hex.stringByTrimmingCharactersInSet(NSCharacterSet.whitespaceAndNewlineCharacterSet() as NSCharacterSet).uppercaseString
@@ -19,7 +19,10 @@ func toColor (hex:String) -> UIColor {
     }
 
     var rgbValue:UInt32 = 0
-    NSScanner(string: cString).scanHexInt(&rgbValue)
+    let scanner = NSScanner(string: cString)
+    if !scanner.scanHexInt(&rgbValue) || !scanner.atEnd {
+        return UIColor.grayColor()
+    }
 
     return UIColor(
         red: CGFloat((rgbValue & 0xFF0000) >> 16) / 255.0,

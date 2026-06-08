@@ -90,11 +90,13 @@ class ShareController: UIViewController{
         let text : String = inputT!.text
 
         // Get the home screen NSData to upload
-        let media: NSData = UIImageJPEGRepresentation(self.screenImage.image, 100)
+        if let image = self.screenImage.image {
+            let media: NSData = UIImageJPEGRepresentation(image, 100)
 
-        // Upload the data to uploads.twitter.com and then use the media_id to update status
-        UploadMedia(media) { (media_id: String) in
-            UpdateStatus(text, media_id)
+            // Upload the data to uploads.twitter.com and then use the media_id to update status
+            UploadMedia(media) { (media_id: String) in
+                UpdateStatus(text, media_id)
+            }
         }
 
         // Send the user back to the initial "main" screen
@@ -120,4 +122,3 @@ class ShareController: UIViewController{
     
     
 }
-
