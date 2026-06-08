@@ -76,6 +76,7 @@ def main():
         "Crashlytics.framework/submit",
         "TwitterKit.framework/Versions/A/TwitterKit",
         "docs/plans/2026-06-08-ios-sharing-baseline.md",
+        "docs/plans/2026-06-08-response-nil-safety.md",
     ]
 
     for relative_path in required_files:
@@ -123,6 +124,9 @@ def main():
     share = read("HomeScreen/ShareController.swift")
     post = read("HomeScreen/Post.swift")
     upload = read("HomeScreen/Upload.swift") + read("HomeScreen/UploadMedia.swift")
+    tweep_picture = read("HomeScreen/TweepPicture.swift")
+    twitter_rest = read("HomeScreen/TwitterRESTAPI.swift")
+    url_helper = read("HomeScreen/URL.swift")
     hex_source = read("HomeScreen/Hex.swift")
     require("http://" not in swift,
             "First-party Swift network endpoints must use HTTPS",
@@ -139,6 +143,25 @@ def main():
     require("println(json)" not in upload,
             "Upload code must not print raw Twitter media-upload JSON responses",
             failures)
+    require('json!["' not in swift and "profile_image_url!" not in swift,
+            "Twitter response parsing must avoid force-unwrapped JSON fields",
+            failures)
+    require("if let jsonDictionary = json as? JSONDictionary" in tweep_picture and
+            "if let profileImageURL = jsonDictionary[\"profile_image_url\"] as? String" in tweep_picture,
+            "TweepPicture must safely unwrap profile image URLs",
+            failures)
+    require("if let statuses = jsonDictionary[\"statuses\"] as? JSONArray" in twitter_rest,
+            "Twitter search parsing must safely unwrap statuses arrays",
+            failures)
+    require("if let media_id_string = jsonDictionary[\"media_id_string\"] as?String" in upload,
+            "Twitter media upload parsing must safely unwrap media IDs",
+            failures)
+    require("UIImage(data: data)!" not in swift and "handler: ((image: UIImage?" in url_helper,
+            "Image downloads must return optional images instead of force-unwrapping data",
+            failures)
+    require("NSURL(string: url_string)!" not in share and "if let profileURL = NSURL(string: url_string)" in share,
+            "ShareController must guard profile image URLs before downloading",
+            failures)
     require("let scanner = NSScanner(string: cString)" in hex_source and "!scanner.scanHexInt(&rgbValue)" in hex_source and "scanner.atEnd" in hex_source,
             "Hex color parser must reject invalid or partial hex strings",
             failures)
@@ -149,16 +172,17 @@ def main():
     changes = read("CHANGES.md")
     gitignore = read(".gitignore")
     plan = PLAN.read_text(encoding="utf-8") if PLAN.exists() else ""
-    require("make check" in readme and "FABRIC_API_KEY" in readme and "NSPhotoLibraryUsageDescription" in readme,
+    nil_safety_plan = read("docs/plans/2026-06-08-response-nil-safety.md")
+    require("make check" in readme and "FABRIC_API_KEY" in readme and "NSPhotoLibraryUsageDescription" in readme and "nil-safe" in readme,
             "README must document static verification, Fabric credentials, and photo permission configuration",
             failures)
-    require("scripts/check-baseline.py" in vision and "photo-library" in vision,
+    require("scripts/check-baseline.py" in vision and "photo-library" in vision and "nil-safe" in vision,
             "VISION must describe the static baseline and photo-library guardrails",
             failures)
     require("FABRIC_API_KEY" in security and "photo-library" in security,
             "SECURITY must document local Fabric settings and photo-library privacy expectations",
             failures)
-    require("credential" in changes.lower() and "photo-library" in changes and "upload" in changes.lower(),
+    require("credential" in changes.lower() and "photo-library" in changes and "upload" in changes.lower() and "nil-safe" in changes,
             "CHANGES must record credential, photo-library, and upload logging updates",
             failures)
     require("*.local.xcconfig" in gitignore and "*.secrets.xcconfig" in gitignore and ".env" in gitignore,
@@ -166,6 +190,9 @@ def main():
             failures)
     require("status: completed" in plan,
             "plan must be marked completed",
+            failures)
+    require("status: completed" in nil_safety_plan,
+            "response nil-safety plan must be marked completed",
             failures)
 
     if shutil.which("xcodebuild"):

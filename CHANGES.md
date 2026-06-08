@@ -8,3 +8,4 @@
 - Added the photo-library usage purpose string required for screenshot preview behavior on modern iOS.
 - Guarded Twitter login, screenshot upload, latest-photo lookup, and hex color parsing edge cases without changing the legacy sharing flow.
 - Removed raw Twitter media-upload response logging from first-party Swift code.
+- Made Twitter JSON and profile image response handling nil-safe.

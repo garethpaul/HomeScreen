@@ -36,13 +36,18 @@ func TweepPicture(handle: String, completion: (result: String) -> Void) {
                 var jsonError : NSError?
 
                 // Setup json to contain the JSON object returned by the API
-                let json : AnyObject? = NSJSONSerialization.JSONObjectWithData(data, options: nil, error: &jsonError)
+                if let responseData = data {
+                    let json : AnyObject? = NSJSONSerialization.JSONObjectWithData(responseData, options: nil, error: &jsonError)
 
-                // find the profile image from the json object e.g. {"profile_image_url": ...}
-                let profile_image_url = json!["profile_image_url"] as? String
+                    // find the profile image from the json object e.g. {"profile_image_url": ...}
+                    if let jsonDictionary = json as? JSONDictionary {
+                        if let profileImageURL = jsonDictionary["profile_image_url"] as? String {
 
-                // Complete and return the profile_image_url back.
-                completion(result: String(profile_image_url!))
+                            // Complete and return the profile_image_url back.
+                            completion(result: profileImageURL)
+                        }
+                    }
+                }
             }
 
             else {

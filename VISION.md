@@ -21,7 +21,8 @@ Priority:
 - Avoid committing Fabric/Twitter credentials, signing material, or private images
 - Maintain security policy and legacy project context
 - Keep `scripts/check-baseline.py` passing for credential placeholders, plist
-  permissions, Swift source guardrails, and static project inventory
+  permissions, nil-safe response parsing, Swift source guardrails, and static
+  project inventory
 
 Next priorities:
 
@@ -51,8 +52,9 @@ Twitter credentials and session data must remain out of source control.
 Current baseline: `make check` runs `scripts/check-baseline.py` without Xcode.
 It verifies that the Fabric build phase uses local placeholders, the
 photo-library permission describes screenshot sharing, uploads require a loaded
-image, raw upload responses are not logged, and the legacy project/framework
-inventory remains visible.
+image, Twitter JSON and profile image responses are nil-safe, raw upload
+responses are not logged, and the legacy project/framework inventory remains
+visible.
 
 ## What We Will Not Merge (For Now)
 

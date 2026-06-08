@@ -61,12 +61,15 @@ class ShareController: UIViewController{
 
             let url = URL()
             let url_string = result
-            url.downloadImage(NSURL(string: url_string)!, {image, error in
-                let newImg = image
-                let circle = CircleImage(RBResizeImage(newImg, CGSize(width: 100, height: 100)))
-                self.profilePic!.image = circle
-                self.profilePic.hidden = true
-            })
+            if let profileURL = NSURL(string: url_string) {
+                url.downloadImage(profileURL, {image, error in
+                    if let newImg = image {
+                        let circle = CircleImage(RBResizeImage(newImg, CGSize(width: 100, height: 100)))
+                        self.profilePic!.image = circle
+                        self.profilePic.hidden = true
+                    }
+                })
+            }
         }
 
         if getNumberOfImages() == true {

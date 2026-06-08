@@ -41,15 +41,19 @@ func UploadMedia(data: NSData, completion: (result: String) -> Void) {
             (response, data, connectionError) -> Void in
             if (connectionError == nil) {
 
-                var jsonError : NSError?
-                let json : AnyObject? =
-                NSJSONSerialization.JSONObjectWithData(data,
-                    options: nil,
-                    error: &jsonError)
-                if let media_id_string = json!["media_id_string"] as?String{
+                if let responseData = data {
+                    var jsonError : NSError?
+                    let json : AnyObject? =
+                    NSJSONSerialization.JSONObjectWithData(responseData,
+                        options: nil,
+                        error: &jsonError)
+                    if let jsonDictionary = json as? JSONDictionary {
+                        if let media_id_string = jsonDictionary["media_id_string"] as?String{
 
-                    // Return media_id_string back so that the next step of magic can occur.
-                    completion(result: media_id_string)
+                            // Return media_id_string back so that the next step of magic can occur.
+                            completion(result: media_id_string)
+                        }
+                    }
                 }
                 
 
@@ -61,5 +65,4 @@ func UploadMedia(data: NSData, completion: (result: String) -> Void) {
         println("error \(clientError)")
     }
 }
-
 

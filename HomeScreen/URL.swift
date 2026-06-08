@@ -8,13 +8,19 @@ import UIKit
 
 class URL{
 
-    func downloadImage(url: NSURL, handler: ((image: UIImage, NSError!) -> Void))
+    func downloadImage(url: NSURL, handler: ((image: UIImage?, NSError!) -> Void))
     {
         var imageRequest: NSURLRequest = NSURLRequest(URL: url)
         NSURLConnection.sendAsynchronousRequest(imageRequest,
             queue: NSOperationQueue.mainQueue(),
             completionHandler:{response, data, error in
-                handler(image: UIImage(data: data)!, error)
+                if let imageData = data {
+                    if let image = UIImage(data: imageData) {
+                        handler(image: image, error)
+                        return
+                    }
+                }
+                handler(image: nil, error)
         })
     }
 
