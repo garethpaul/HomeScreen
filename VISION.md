@@ -46,3 +46,6 @@ Twitter credentials and session data must remain out of source control.
 - Silent screenshot upload or background photo access
 - Analytics around private images or account data
 - Broad dependency migration bundled with sharing behavior changes
+
+This list is a roadmap guardrail, not a permanent rule.
+Strong user demand and strong technical rationale can change it.
