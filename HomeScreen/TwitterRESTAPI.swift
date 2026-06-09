@@ -75,18 +75,24 @@ func Search(completion: (result: [String]) -> Void) {
 
                     else {
                         println("Error: \(connectionError)")
+                        completion(result: [])
                     }
                 }
             }
             else {
                 println("Error: \(clientError)")
+                completion(result: [])
             }
             
         } else {
-            println("error: \(error.localizedDescription)");
+            if let loginError = error {
+                println("error: \(loginError.localizedDescription)")
+            } else {
+                println("error: Twitter search login failed")
+            }
+            completion(result: [])
         }
         
     }
 }
-
 

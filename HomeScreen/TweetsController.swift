@@ -102,35 +102,59 @@ class TweetsController: UITableViewController, TWTRTweetViewDelegate  {
             return
         }
 
+        if tweetIDs.count == 0 {
+            self.finishLoadingTweets()
+            return
+        }
+
+        self.isLoadingTweets = true
+
         // load tweets with guest login
         Twitter.sharedInstance().logInGuestWithCompletion { (session: TWTRGuestSession!, error: NSError!) in
+            if session == nil {
+                if let guestError = error {
+                    println("Error: \(guestError.localizedDescription)")
+                } else {
+                    println("Error: Twitter guest login failed")
+                }
+                self.finishLoadingTweets()
+                return
+            }
 
             // Find the tweets with the tweetIDs
             Twitter.sharedInstance().APIClient.loadTweetsWithIDs(tweetIDs) {
                 (twttrs, error) -> Void in
 
                 // If there are tweets do something magical
-                if ((twttrs) != nil) {
+                if let loadedTweets = twttrs {
 
                     // Loop through tweets and do something
-                    for i in twttrs {
+                    for i in loadedTweets {
                         // Append the Tweet to the Tweets to display in the table view.
-                        self.tweets.append(i as TWTRTweet)
+                        if let tweet = i as? TWTRTweet {
+                            self.tweets.append(tweet)
+                        }
                     }
                 } else {
                     println(error)
                 }
                 // once loaded
 
-                // Stop animating the spinner
-                self.activityIndicator.stopAnimating()
-
-                // Remove the spinner
-                self.activityIndicator.hidden = true
+                self.finishLoadingTweets()
 
             }
         }
 
+    }
+
+    func finishLoadingTweets() {
+        self.isLoadingTweets = false
+
+        // Stop animating the spinner
+        self.activityIndicator.stopAnimating()
+
+        // Remove the spinner
+        self.activityIndicator.hidden = true
     }
 
 
@@ -223,4 +247,3 @@ class TweetsController: UITableViewController, TWTRTweetViewDelegate  {
     }
 
 }
-

@@ -77,6 +77,8 @@ stay available while preserving the single source of truth.
 The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace XML, checks the Xcode project metadata, verifies the legacy Swift and framework inventory, and guards against checked-in Fabric credential literals, missing photo-library permission text, unsafe empty-screenshot uploads, nil screenshot callbacks, screenshot fallback behavior, nil-safe Twitter/profile image and write response handling, missing Twitter session guards on the share screen, raw Twitter upload-response logging, deprecated update_with_media helper code, and invalid hex color parsing.
 It also guards JPEG media data creation so screenshot uploads use a valid
 compression quality and skip upload when image encoding fails.
+It also guards tweet feed failures so search/login errors complete safely and
+the loading indicator is cleared without force-casting returned tweet objects.
 
 For full legacy verification on macOS, use Xcode's test action or `xcodebuild test` with the appropriate scheme and destination.
 
@@ -99,6 +101,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Home screen screenshots can reveal private apps, messages, accounts, or location hints. Keep uploads user-initiated and avoid raw response or image logging.
 - Treat Twitter session state as optional on presentation paths; expired or
   missing sessions should not crash profile-image rendering.
+- Treat tweet feed failures as recoverable; Twitter search or guest-login
+  failures should complete without leaking loading state.
 
 ## Maintenance Notes
 
@@ -113,6 +117,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   deprecated update_with_media removal guardrail.
 - See `docs/plans/2026-06-09-jpeg-media-data-guard.md` for the JPEG media data
   upload guardrail.
+- See `docs/plans/2026-06-09-tweet-feed-failure-guard.md` for the tweet feed
+  failures guardrail.
 - See `docs/plans/2026-06-09-make-gate-aliases.md` for the local gate alias guardrail.
 - Run `make lint`, `make test`, `make build`, and `make check` before pushing changes to plist files, Swift sources, Xcode project metadata, credential handling, or screenshot-sharing behavior.
 

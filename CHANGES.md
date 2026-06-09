@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Guarded tweet feed failures so Twitter search/login errors complete safely,
+  clear loading state, and avoid force-casting returned tweet objects.
 - Added local `make lint`, `make test`, and `make build` gate aliases for the
   static iOS sharing baseline.
 - Made screenshot lookup nil-safe when Photos returns no image or a size

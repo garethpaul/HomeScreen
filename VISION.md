@@ -26,6 +26,8 @@ Priority:
 - Keep `make lint`, `make test`, `make build`, and `make check` available as
   local verification gates
 - Keep JPEG media data generation guarded before screenshot uploads
+- Keep tweet feed failures recoverable so search/login errors clear loading
+  state instead of crashing or hanging
 
 Next priorities:
 
@@ -62,6 +64,8 @@ nil-safe, share-screen Twitter session access is guarded, raw upload responses
 are not logged, deprecated update_with_media helper code stays removed, and the
 legacy project/framework inventory remains visible. JPEG media data creation
 must use a valid compression quality and be guarded before upload.
+Tweet feed failures must complete safely and clear loading state when Twitter
+search or guest-login setup fails.
 
 ## What We Will Not Merge (For Now)
 

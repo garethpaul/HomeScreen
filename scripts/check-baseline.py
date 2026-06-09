@@ -15,6 +15,7 @@ SCREENSHOT_FALLBACK_PLAN = ROOT / "docs/plans/2026-06-09-preview-screenshot-fall
 SHARE_SESSION_PLAN = ROOT / "docs/plans/2026-06-09-share-session-guard.md"
 DEPRECATED_UPLOAD_PLAN = ROOT / "docs/plans/2026-06-09-deprecated-update-with-media-removal.md"
 JPEG_MEDIA_PLAN = ROOT / "docs/plans/2026-06-09-jpeg-media-data-guard.md"
+TWEET_FEED_PLAN = ROOT / "docs/plans/2026-06-09-tweet-feed-failure-guard.md"
 
 
 def require(condition, message, failures):
@@ -90,6 +91,7 @@ def main():
         "docs/plans/2026-06-09-share-session-guard.md",
         "docs/plans/2026-06-09-deprecated-update-with-media-removal.md",
         "docs/plans/2026-06-09-jpeg-media-data-guard.md",
+        "docs/plans/2026-06-09-tweet-feed-failure-guard.md",
     ]
 
     for relative_path in required_files:
@@ -142,6 +144,7 @@ def main():
     upload = active_upload + legacy_upload
     tweep_picture = read("HomeScreen/TweepPicture.swift")
     twitter_rest = read("HomeScreen/TwitterRESTAPI.swift")
+    tweets_controller = read("HomeScreen/TweetsController.swift")
     url_helper = read("HomeScreen/URL.swift")
     hex_source = read("HomeScreen/Hex.swift")
     require("http://" not in swift,
@@ -206,6 +209,18 @@ def main():
             "let userName = session.userName" in share,
             "ShareController must guard the Twitter session before reading the profile user name",
             failures)
+    require("completion(result: [])" in twitter_rest and
+            "if let loginError = error" in twitter_rest and
+            "Twitter search login failed" in twitter_rest,
+            "Twitter search must complete safely when login, request, or connection setup fails",
+            failures)
+    require("if tweetIDs.count == 0" in tweets_controller and
+            "self.isLoadingTweets = true" in tweets_controller and
+            "if session == nil" in tweets_controller and
+            "func finishLoadingTweets()" in tweets_controller and
+            "as? TWTRTweet" in tweets_controller,
+            "TweetsController must guard empty IDs, guest-login failures, and loaded tweet casts",
+            failures)
     require("let scanner = NSScanner(string: cString)" in hex_source and "!scanner.scanHexInt(&rgbValue)" in hex_source and "scanner.atEnd" in hex_source,
             "Hex color parser must reject invalid or partial hex strings",
             failures)
@@ -225,16 +240,17 @@ def main():
     share_session_plan = SHARE_SESSION_PLAN.read_text(encoding="utf-8") if SHARE_SESSION_PLAN.exists() else ""
     deprecated_upload_plan = DEPRECATED_UPLOAD_PLAN.read_text(encoding="utf-8") if DEPRECATED_UPLOAD_PLAN.exists() else ""
     jpeg_media_plan = JPEG_MEDIA_PLAN.read_text(encoding="utf-8") if JPEG_MEDIA_PLAN.exists() else ""
+    tweet_feed_plan = TWEET_FEED_PLAN.read_text(encoding="utf-8") if TWEET_FEED_PLAN.exists() else ""
     require(".PHONY: build check lint test" in makefile and "lint test build: check" in makefile,
             "Makefile must expose lint, test, and build aliases for the local baseline",
             failures)
-    require("make lint" in readme and "make test" in readme and "make build" in readme and "make check" in readme and "FABRIC_API_KEY" in readme and "NSPhotoLibraryUsageDescription" in readme and "nil-safe" in readme and "screenshot fallback" in readme and "write response" in readme and "Twitter session" in readme and "JPEG media data" in readme,
+    require("make lint" in readme and "make test" in readme and "make build" in readme and "make check" in readme and "FABRIC_API_KEY" in readme and "NSPhotoLibraryUsageDescription" in readme and "nil-safe" in readme and "screenshot fallback" in readme and "write response" in readme and "Twitter session" in readme and "JPEG media data" in readme and "tweet feed failures" in readme,
             "README must document static verification, Fabric credentials, and photo permission configuration",
             failures)
     require("deprecated update_with_media" in readme,
             "README must document deprecated update_with_media removal",
             failures)
-    require("scripts/check-baseline.py" in vision and "make lint" in vision and "make test" in vision and "make build" in vision and "photo-library" in vision and "nil-safe" in vision and "screenshot fallback" in vision and "write response" in vision and "Twitter session" in vision and "deprecated update_with_media" in vision and "JPEG media data" in vision,
+    require("scripts/check-baseline.py" in vision and "make lint" in vision and "make test" in vision and "make build" in vision and "photo-library" in vision and "nil-safe" in vision and "screenshot fallback" in vision and "write response" in vision and "Twitter session" in vision and "deprecated update_with_media" in vision and "JPEG media data" in vision and "tweet feed failures" in vision,
             "VISION must describe the static baseline and photo-library guardrails",
             failures)
     require("FABRIC_API_KEY" in security and "photo-library" in security,
@@ -260,6 +276,9 @@ def main():
             failures)
     require("JPEG media data" in changes,
             "CHANGES must record JPEG media data guarding",
+            failures)
+    require("tweet feed failures" in changes,
+            "CHANGES must record tweet feed failure guarding",
             failures)
     require("JSONObjectWithData(data" not in swift,
             "Twitter JSON parsing must guard optional response data before deserialization",
@@ -296,6 +315,9 @@ def main():
             failures)
     require("status: completed" in jpeg_media_plan,
             "JPEG media data guard plan must be marked completed",
+            failures)
+    require("status: completed" in tweet_feed_plan,
+            "tweet feed failure guard plan must be marked completed",
             failures)
 
     if shutil.which("xcodebuild"):
