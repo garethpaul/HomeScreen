@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-09
+
+- Made screenshot lookup nil-safe when Photos returns no image or a size
+  mismatch, preserving the user-initiated sharing flow without crashing.
+
 ## 2026-06-08
 
 - Removed committed Fabric build credentials from the Xcode build phase and replaced them with local environment placeholders.

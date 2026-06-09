@@ -9,6 +9,7 @@ import xml.etree.ElementTree as ET
 
 ROOT = Path(__file__).resolve().parents[1]
 PLAN = ROOT / "docs/plans/2026-06-08-ios-sharing-baseline.md"
+SCREENSHOT_PLAN = ROOT / "docs/plans/2026-06-09-screenshot-nil-safety.md"
 
 
 def require(condition, message, failures):
@@ -78,6 +79,7 @@ def main():
         "docs/plans/2026-06-08-ios-sharing-baseline.md",
         "docs/plans/2026-06-08-response-nil-safety.md",
         "docs/plans/2026-06-08-write-response-data-guard.md",
+        "docs/plans/2026-06-09-screenshot-nil-safety.md",
     ]
 
     for relative_path in required_files:
@@ -141,6 +143,12 @@ def main():
     require("images.lastObject as? PHAsset" in post and "images.lastObject as PHAsset" not in post,
             "Post.swift must safely handle an empty photo fetch result",
             failures)
+    require("completion: (result: UIImage?) -> Void" in post and
+            "if let screenshot = newImage" in post and
+            "completion(result: nil)" in post and
+            "(result: UIImage?)" in share,
+            "Post.swift must safely handle nil screenshot images from Photos",
+            failures)
     require("println(json)" not in upload,
             "Upload code must not print raw Twitter media-upload JSON responses",
             failures)
@@ -175,10 +183,11 @@ def main():
     plan = PLAN.read_text(encoding="utf-8") if PLAN.exists() else ""
     nil_safety_plan = read("docs/plans/2026-06-08-response-nil-safety.md")
     write_response_plan = read("docs/plans/2026-06-08-write-response-data-guard.md")
-    require("make check" in readme and "FABRIC_API_KEY" in readme and "NSPhotoLibraryUsageDescription" in readme and "nil-safe" in readme and "write response" in readme,
+    screenshot_plan = SCREENSHOT_PLAN.read_text(encoding="utf-8") if SCREENSHOT_PLAN.exists() else ""
+    require("make check" in readme and "FABRIC_API_KEY" in readme and "NSPhotoLibraryUsageDescription" in readme and "nil-safe" in readme and "screenshot" in readme and "write response" in readme,
             "README must document static verification, Fabric credentials, and photo permission configuration",
             failures)
-    require("scripts/check-baseline.py" in vision and "photo-library" in vision and "nil-safe" in vision and "write response" in vision,
+    require("scripts/check-baseline.py" in vision and "photo-library" in vision and "nil-safe" in vision and "screenshot" in vision and "write response" in vision,
             "VISION must describe the static baseline and photo-library guardrails",
             failures)
     require("FABRIC_API_KEY" in security and "photo-library" in security,
@@ -186,6 +195,9 @@ def main():
             failures)
     require("credential" in changes.lower() and "photo-library" in changes and "upload" in changes.lower() and "nil-safe" in changes,
             "CHANGES must record credential, photo-library, and upload logging updates",
+            failures)
+    require("screenshot" in changes.lower(),
+            "CHANGES must record screenshot nil-safety updates",
             failures)
     require("write response" in changes.lower(),
             "CHANGES must record write response data guarding",
@@ -207,6 +219,9 @@ def main():
             failures)
     require("status: completed" in write_response_plan,
             "write response data guard plan must be marked completed",
+            failures)
+    require("status: completed" in screenshot_plan,
+            "screenshot nil-safety plan must be marked completed",
             failures)
 
     if shutil.which("xcodebuild"):

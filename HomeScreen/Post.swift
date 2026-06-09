@@ -18,7 +18,7 @@ func getNumberOfImages() -> Bool{
 
 
 // Get screenshot image if it exists
-func getScreenshotImage(screenSize: CGSize, completion: (result: UIImage) -> Void) {
+func getScreenshotImage(screenSize: CGSize, completion: (result: UIImage?) -> Void) {
     let images = PHAsset.fetchAssetsWithMediaType(.Image, options: nil)
 
     if let asset = images.lastObject as? PHAsset {
@@ -39,10 +39,17 @@ func getScreenshotImage(screenSize: CGSize, completion: (result: UIImage) -> Voi
                 options: nil,
                 resultHandler: {(newImage: UIImage!,
                     info: [NSObject : AnyObject]!) in
-                    completion(result: newImage)
+                    if let screenshot = newImage {
+                        completion(result: screenshot)
+                    } else {
+                        completion(result: nil)
+                    }
             })
+            return
         } else{
             println("images screensize doesn't match")
         }
     }
+
+    completion(result: nil)
 }

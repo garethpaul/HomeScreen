@@ -75,9 +75,11 @@ class ShareController: UIViewController{
         if getNumberOfImages() == true {
             let screenObj = CGSize(width:self.screenSize.width*2, height: self.screenSize.height*2)
             // get Screenshot
-            getScreenshotImage(screenObj) { (result: UIImage) in
-                self.screenImage.image = result
-                //self.homeScreen.image = result
+            getScreenshotImage(screenObj) { (result: UIImage?) in
+                if let screenshot = result {
+                    self.screenImage.image = screenshot
+                    //self.homeScreen.image = screenshot
+                }
             }
         }
     }
