@@ -12,6 +12,8 @@
   name for profile-image rendering.
 - Removed deprecated update_with_media helper code so the active upload flow
   stays on the guarded media/upload path.
+- Guarded JPEG media data creation before upload and used a valid screenshot
+  compression quality.
 
 ## 2026-06-08
 

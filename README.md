@@ -75,6 +75,8 @@ on hosts without the legacy Xcode toolchain, so the standard local gate commands
 stay available while preserving the single source of truth.
 
 The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace XML, checks the Xcode project metadata, verifies the legacy Swift and framework inventory, and guards against checked-in Fabric credential literals, missing photo-library permission text, unsafe empty-screenshot uploads, nil screenshot callbacks, screenshot fallback behavior, nil-safe Twitter/profile image and write response handling, missing Twitter session guards on the share screen, raw Twitter upload-response logging, deprecated update_with_media helper code, and invalid hex color parsing.
+It also guards JPEG media data creation so screenshot uploads use a valid
+compression quality and skip upload when image encoding fails.
 
 For full legacy verification on macOS, use Xcode's test action or `xcodebuild test` with the appropriate scheme and destination.
 
@@ -109,6 +111,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `docs/plans/2026-06-09-share-session-guard.md` for the share-screen Twitter session guardrail.
 - See `docs/plans/2026-06-09-deprecated-update-with-media-removal.md` for the
   deprecated update_with_media removal guardrail.
+- See `docs/plans/2026-06-09-jpeg-media-data-guard.md` for the JPEG media data
+  upload guardrail.
 - See `docs/plans/2026-06-09-make-gate-aliases.md` for the local gate alias guardrail.
 - Run `make lint`, `make test`, `make build`, and `make check` before pushing changes to plist files, Swift sources, Xcode project metadata, credential handling, or screenshot-sharing behavior.
 

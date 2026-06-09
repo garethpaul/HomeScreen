@@ -98,11 +98,11 @@ class ShareController: UIViewController{
 
         // Get the home screen NSData to upload
         if let image = self.screenImage.image {
-            let media: NSData = UIImageJPEGRepresentation(image, 100)
-
-            // Upload the data to uploads.twitter.com and then use the media_id to update status
-            UploadMedia(media) { (media_id: String) in
-                UpdateStatus(text, media_id)
+            if let media = UIImageJPEGRepresentation(image, 1.0) {
+                // Upload the data to uploads.twitter.com and then use the media_id to update status
+                UploadMedia(media) { (media_id: String) in
+                    UpdateStatus(text, media_id)
+                }
             }
         }
 

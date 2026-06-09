@@ -14,6 +14,7 @@ SCREENSHOT_PLAN = ROOT / "docs/plans/2026-06-09-screenshot-nil-safety.md"
 SCREENSHOT_FALLBACK_PLAN = ROOT / "docs/plans/2026-06-09-preview-screenshot-fallback.md"
 SHARE_SESSION_PLAN = ROOT / "docs/plans/2026-06-09-share-session-guard.md"
 DEPRECATED_UPLOAD_PLAN = ROOT / "docs/plans/2026-06-09-deprecated-update-with-media-removal.md"
+JPEG_MEDIA_PLAN = ROOT / "docs/plans/2026-06-09-jpeg-media-data-guard.md"
 
 
 def require(condition, message, failures):
@@ -88,6 +89,7 @@ def main():
         "docs/plans/2026-06-09-preview-screenshot-fallback.md",
         "docs/plans/2026-06-09-share-session-guard.md",
         "docs/plans/2026-06-09-deprecated-update-with-media-removal.md",
+        "docs/plans/2026-06-09-jpeg-media-data-guard.md",
     ]
 
     for relative_path in required_files:
@@ -150,6 +152,10 @@ def main():
             failures)
     require("if let image = self.screenImage.image" in share,
             "ShareController must not upload when no screenshot image is loaded",
+            failures)
+    require("UIImageJPEGRepresentation(image, 100)" not in share and
+            "if let media = UIImageJPEGRepresentation(image, 1.0)" in share,
+            "ShareController must guard JPEG media data and use a valid compression quality",
             failures)
     require("images.lastObject as? PHAsset" in post and "images.lastObject as PHAsset" not in post,
             "Post.swift must safely handle an empty photo fetch result",
@@ -218,16 +224,17 @@ def main():
     screenshot_fallback_plan = SCREENSHOT_FALLBACK_PLAN.read_text(encoding="utf-8") if SCREENSHOT_FALLBACK_PLAN.exists() else ""
     share_session_plan = SHARE_SESSION_PLAN.read_text(encoding="utf-8") if SHARE_SESSION_PLAN.exists() else ""
     deprecated_upload_plan = DEPRECATED_UPLOAD_PLAN.read_text(encoding="utf-8") if DEPRECATED_UPLOAD_PLAN.exists() else ""
+    jpeg_media_plan = JPEG_MEDIA_PLAN.read_text(encoding="utf-8") if JPEG_MEDIA_PLAN.exists() else ""
     require(".PHONY: build check lint test" in makefile and "lint test build: check" in makefile,
             "Makefile must expose lint, test, and build aliases for the local baseline",
             failures)
-    require("make lint" in readme and "make test" in readme and "make build" in readme and "make check" in readme and "FABRIC_API_KEY" in readme and "NSPhotoLibraryUsageDescription" in readme and "nil-safe" in readme and "screenshot fallback" in readme and "write response" in readme and "Twitter session" in readme,
+    require("make lint" in readme and "make test" in readme and "make build" in readme and "make check" in readme and "FABRIC_API_KEY" in readme and "NSPhotoLibraryUsageDescription" in readme and "nil-safe" in readme and "screenshot fallback" in readme and "write response" in readme and "Twitter session" in readme and "JPEG media data" in readme,
             "README must document static verification, Fabric credentials, and photo permission configuration",
             failures)
     require("deprecated update_with_media" in readme,
             "README must document deprecated update_with_media removal",
             failures)
-    require("scripts/check-baseline.py" in vision and "make lint" in vision and "make test" in vision and "make build" in vision and "photo-library" in vision and "nil-safe" in vision and "screenshot fallback" in vision and "write response" in vision and "Twitter session" in vision and "deprecated update_with_media" in vision,
+    require("scripts/check-baseline.py" in vision and "make lint" in vision and "make test" in vision and "make build" in vision and "photo-library" in vision and "nil-safe" in vision and "screenshot fallback" in vision and "write response" in vision and "Twitter session" in vision and "deprecated update_with_media" in vision and "JPEG media data" in vision,
             "VISION must describe the static baseline and photo-library guardrails",
             failures)
     require("FABRIC_API_KEY" in security and "photo-library" in security,
@@ -250,6 +257,9 @@ def main():
             failures)
     require("deprecated update_with_media" in changes,
             "CHANGES must record deprecated update_with_media removal",
+            failures)
+    require("JPEG media data" in changes,
+            "CHANGES must record JPEG media data guarding",
             failures)
     require("JSONObjectWithData(data" not in swift,
             "Twitter JSON parsing must guard optional response data before deserialization",
@@ -283,6 +293,9 @@ def main():
             failures)
     require("status: completed" in deprecated_upload_plan,
             "deprecated upload helper plan must be marked completed",
+            failures)
+    require("status: completed" in jpeg_media_plan,
+            "JPEG media data guard plan must be marked completed",
             failures)
 
     if shutil.which("xcodebuild"):

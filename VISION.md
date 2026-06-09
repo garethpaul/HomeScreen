@@ -25,6 +25,7 @@ Priority:
   project inventory
 - Keep `make lint`, `make test`, `make build`, and `make check` available as
   local verification gates
+- Keep JPEG media data generation guarded before screenshot uploads
 
 Next priorities:
 
@@ -59,7 +60,8 @@ image, Photos screenshot callbacks and screenshot fallback behavior are
 nil-safe, Twitter JSON, profile image, and write response data handling are
 nil-safe, share-screen Twitter session access is guarded, raw upload responses
 are not logged, deprecated update_with_media helper code stays removed, and the
-legacy project/framework inventory remains visible.
+legacy project/framework inventory remains visible. JPEG media data creation
+must use a valid compression quality and be guarded before upload.
 
 ## What We Will Not Merge (For Now)
 
