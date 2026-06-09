@@ -52,9 +52,9 @@ Twitter credentials and session data must remain out of source control.
 Current baseline: `make check` runs `scripts/check-baseline.py` without Xcode.
 It verifies that the Fabric build phase uses local placeholders, the
 photo-library permission describes screenshot sharing, uploads require a loaded
-image, Twitter JSON and profile image responses are nil-safe, raw upload
-responses are not logged, and the legacy project/framework inventory remains
-visible.
+image, Twitter JSON, profile image, and write response data handling are
+nil-safe, raw upload responses are not logged, and the legacy project/framework
+inventory remains visible.
 
 ## What We Will Not Merge (For Now)
 

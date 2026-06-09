@@ -42,11 +42,13 @@ func UpdateStatus(status: String, mediaId: String) {
             (response, data, connectionError) -> Void in
             if (connectionError == nil) {
 
-                var jsonError : NSError?
-                let json : AnyObject? =
-                NSJSONSerialization.JSONObjectWithData(data,
-                    options: nil,
-                    error: &jsonError)
+                if let responseData = data {
+                    var jsonError : NSError?
+                    let json : AnyObject? =
+                    NSJSONSerialization.JSONObjectWithData(responseData,
+                        options: nil,
+                        error: &jsonError)
+                }
 
                 // TODO: do something e.g. return a true value if the tweet has been successfully created :-) could also render a tweet ...                
 
@@ -58,6 +60,5 @@ func UpdateStatus(status: String, mediaId: String) {
         println("error \(clientError)")
     }
 }
-
 
 

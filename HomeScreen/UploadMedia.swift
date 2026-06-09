@@ -40,11 +40,13 @@ func UploadMedia(media: NSData, completion: (result: [String]) -> Void) {
                     (response, data, connectionError) -> Void in
                     if (connectionError == nil) {
 
-                        var jsonError : NSError?
-                        let json : AnyObject? =
-                        NSJSONSerialization.JSONObjectWithData(data,
-                            options: nil,
-                            error: &jsonError)
+                        if let responseData = data {
+                            var jsonError : NSError?
+                            let json : AnyObject? =
+                            NSJSONSerialization.JSONObjectWithData(responseData,
+                                options: nil,
+                                error: &jsonError)
+                        }
 
                         // Iterate through JSON response and append the values to the TweetArray
 
@@ -69,5 +71,4 @@ func UploadMedia(media: NSData, completion: (result: [String]) -> Void) {
         
     }
 }
-
 

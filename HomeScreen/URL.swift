@@ -25,20 +25,29 @@ class URL{
     }
 
     func post(params : String, url : String, postCompleted : (succeeded: Bool, msg: String) -> ()) {
-        var request = NSMutableURLRequest(URL: NSURL(string: url)!)
-        var session = NSURLSession.sharedSession()
-        request.HTTPMethod = "POST"
+        if let requestURL = NSURL(string: url) {
+            var request = NSMutableURLRequest(URL: requestURL)
+            var session = NSURLSession.sharedSession()
+            request.HTTPMethod = "POST"
 
-        var err: NSError?
-        var bodyData = params
-        request.HTTPBody = bodyData.dataUsingEncoding(NSUTF8StringEncoding);
-        var task = session.dataTaskWithRequest(request, completionHandler: {data, response, error -> Void in
-            //println("Response: \(response)")
-            var strData = NSString(data: data, encoding: NSUTF8StringEncoding)
-            //println("Body: \(strData)")
             var err: NSError?
-            var json = NSJSONSerialization.JSONObjectWithData(data, options: .MutableLeaves, error: &err) as? NSDictionary
-        })
-        task.resume()
+            var bodyData = params
+            request.HTTPBody = bodyData.dataUsingEncoding(NSUTF8StringEncoding);
+            var task = session.dataTaskWithRequest(request, completionHandler: {data, response, error -> Void in
+                //println("Response: \(response)")
+                if let responseData = data {
+                    var strData = NSString(data: responseData, encoding: NSUTF8StringEncoding)
+                    //println("Body: \(strData)")
+                    var err: NSError?
+                    var json = NSJSONSerialization.JSONObjectWithData(responseData, options: .MutableLeaves, error: &err) as? NSDictionary
+                    postCompleted(succeeded: err == nil, msg: err == nil ? "OK" : "Invalid response")
+                } else {
+                    postCompleted(succeeded: false, msg: "Missing response data")
+                }
+            })
+            task.resume()
+        } else {
+            postCompleted(succeeded: false, msg: "Invalid URL")
+        }
     }
 }

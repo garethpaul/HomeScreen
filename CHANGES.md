@@ -9,3 +9,4 @@
 - Guarded Twitter login, screenshot upload, latest-photo lookup, and hex color parsing edge cases without changing the legacy sharing flow.
 - Removed raw Twitter media-upload response logging from first-party Swift code.
 - Made Twitter JSON and profile image response handling nil-safe.
+- Guarded optional Twitter write response data before JSON parsing.

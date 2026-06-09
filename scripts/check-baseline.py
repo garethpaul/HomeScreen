@@ -77,6 +77,7 @@ def main():
         "TwitterKit.framework/Versions/A/TwitterKit",
         "docs/plans/2026-06-08-ios-sharing-baseline.md",
         "docs/plans/2026-06-08-response-nil-safety.md",
+        "docs/plans/2026-06-08-write-response-data-guard.md",
     ]
 
     for relative_path in required_files:
@@ -173,10 +174,11 @@ def main():
     gitignore = read(".gitignore")
     plan = PLAN.read_text(encoding="utf-8") if PLAN.exists() else ""
     nil_safety_plan = read("docs/plans/2026-06-08-response-nil-safety.md")
-    require("make check" in readme and "FABRIC_API_KEY" in readme and "NSPhotoLibraryUsageDescription" in readme and "nil-safe" in readme,
+    write_response_plan = read("docs/plans/2026-06-08-write-response-data-guard.md")
+    require("make check" in readme and "FABRIC_API_KEY" in readme and "NSPhotoLibraryUsageDescription" in readme and "nil-safe" in readme and "write response" in readme,
             "README must document static verification, Fabric credentials, and photo permission configuration",
             failures)
-    require("scripts/check-baseline.py" in vision and "photo-library" in vision and "nil-safe" in vision,
+    require("scripts/check-baseline.py" in vision and "photo-library" in vision and "nil-safe" in vision and "write response" in vision,
             "VISION must describe the static baseline and photo-library guardrails",
             failures)
     require("FABRIC_API_KEY" in security and "photo-library" in security,
@@ -184,6 +186,15 @@ def main():
             failures)
     require("credential" in changes.lower() and "photo-library" in changes and "upload" in changes.lower() and "nil-safe" in changes,
             "CHANGES must record credential, photo-library, and upload logging updates",
+            failures)
+    require("write response" in changes.lower(),
+            "CHANGES must record write response data guarding",
+            failures)
+    require("JSONObjectWithData(data" not in swift,
+            "Twitter JSON parsing must guard optional response data before deserialization",
+            failures)
+    require("NSURL(string: url)!" not in url_helper and "if let requestURL = NSURL(string: url)" in url_helper and "Missing response data" in url_helper and "Invalid URL" in url_helper,
+            "URL.post must guard invalid URLs and missing response data",
             failures)
     require("*.local.xcconfig" in gitignore and "*.secrets.xcconfig" in gitignore and ".env" in gitignore,
             ".gitignore must exclude local secret configuration files",
@@ -193,6 +204,9 @@ def main():
             failures)
     require("status: completed" in nil_safety_plan,
             "response nil-safety plan must be marked completed",
+            failures)
+    require("status: completed" in write_response_plan,
+            "write response data guard plan must be marked completed",
             failures)
 
     if shutil.which("xcodebuild"):
