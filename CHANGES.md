@@ -6,6 +6,8 @@
   mismatch, preserving the user-initiated sharing flow without crashing.
 - Added screenshot fallback handling in the main preview controller when Photos
   returns no screenshot image.
+- Guarded share-screen Twitter session access before reading the profile user
+  name for profile-image rendering.
 
 ## 2026-06-08
 

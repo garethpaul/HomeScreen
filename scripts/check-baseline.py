@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PLAN = ROOT / "docs/plans/2026-06-08-ios-sharing-baseline.md"
 SCREENSHOT_PLAN = ROOT / "docs/plans/2026-06-09-screenshot-nil-safety.md"
 SCREENSHOT_FALLBACK_PLAN = ROOT / "docs/plans/2026-06-09-preview-screenshot-fallback.md"
+SHARE_SESSION_PLAN = ROOT / "docs/plans/2026-06-09-share-session-guard.md"
 
 
 def require(condition, message, failures):
@@ -82,6 +83,7 @@ def main():
         "docs/plans/2026-06-08-write-response-data-guard.md",
         "docs/plans/2026-06-09-screenshot-nil-safety.md",
         "docs/plans/2026-06-09-preview-screenshot-fallback.md",
+        "docs/plans/2026-06-09-share-session-guard.md",
     ]
 
     for relative_path in required_files:
@@ -179,6 +181,11 @@ def main():
     require("NSURL(string: url_string)!" not in share and "if let profileURL = NSURL(string: url_string)" in share,
             "ShareController must guard profile image URLs before downloading",
             failures)
+    require("Twitter.sharedInstance().session().userName" not in share and
+            "if let session = Twitter.sharedInstance().session()" in share and
+            "let userName = session.userName" in share,
+            "ShareController must guard the Twitter session before reading the profile user name",
+            failures)
     require("let scanner = NSScanner(string: cString)" in hex_source and "!scanner.scanHexInt(&rgbValue)" in hex_source and "scanner.atEnd" in hex_source,
             "Hex color parser must reject invalid or partial hex strings",
             failures)
@@ -193,10 +200,11 @@ def main():
     write_response_plan = read("docs/plans/2026-06-08-write-response-data-guard.md")
     screenshot_plan = SCREENSHOT_PLAN.read_text(encoding="utf-8") if SCREENSHOT_PLAN.exists() else ""
     screenshot_fallback_plan = SCREENSHOT_FALLBACK_PLAN.read_text(encoding="utf-8") if SCREENSHOT_FALLBACK_PLAN.exists() else ""
-    require("make check" in readme and "FABRIC_API_KEY" in readme and "NSPhotoLibraryUsageDescription" in readme and "nil-safe" in readme and "screenshot fallback" in readme and "write response" in readme,
+    share_session_plan = SHARE_SESSION_PLAN.read_text(encoding="utf-8") if SHARE_SESSION_PLAN.exists() else ""
+    require("make check" in readme and "FABRIC_API_KEY" in readme and "NSPhotoLibraryUsageDescription" in readme and "nil-safe" in readme and "screenshot fallback" in readme and "write response" in readme and "Twitter session" in readme,
             "README must document static verification, Fabric credentials, and photo permission configuration",
             failures)
-    require("scripts/check-baseline.py" in vision and "photo-library" in vision and "nil-safe" in vision and "screenshot fallback" in vision and "write response" in vision,
+    require("scripts/check-baseline.py" in vision and "photo-library" in vision and "nil-safe" in vision and "screenshot fallback" in vision and "write response" in vision and "Twitter session" in vision,
             "VISION must describe the static baseline and photo-library guardrails",
             failures)
     require("FABRIC_API_KEY" in security and "photo-library" in security,
@@ -213,6 +221,9 @@ def main():
             failures)
     require("write response" in changes.lower(),
             "CHANGES must record write response data guarding",
+            failures)
+    require("Twitter session" in changes,
+            "CHANGES must record share-screen Twitter session guarding",
             failures)
     require("JSONObjectWithData(data" not in swift,
             "Twitter JSON parsing must guard optional response data before deserialization",
@@ -237,6 +248,9 @@ def main():
             failures)
     require("status: completed" in screenshot_fallback_plan,
             "screenshot fallback plan must be marked completed",
+            failures)
+    require("status: completed" in share_session_plan,
+            "share session guard plan must be marked completed",
             failures)
 
     if shutil.which("xcodebuild"):

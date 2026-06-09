@@ -64,7 +64,7 @@ Run the local static baseline:
 make check
 ```
 
-The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace XML, checks the Xcode project metadata, verifies the legacy Swift and framework inventory, and guards against checked-in Fabric credential literals, missing photo-library permission text, unsafe empty-screenshot uploads, nil screenshot callbacks, screenshot fallback behavior, nil-safe Twitter/profile image and write response handling, raw Twitter upload-response logging, and invalid hex color parsing.
+The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace XML, checks the Xcode project metadata, verifies the legacy Swift and framework inventory, and guards against checked-in Fabric credential literals, missing photo-library permission text, unsafe empty-screenshot uploads, nil screenshot callbacks, screenshot fallback behavior, nil-safe Twitter/profile image and write response handling, missing Twitter session guards on the share screen, raw Twitter upload-response logging, and invalid hex color parsing.
 
 For full legacy verification on macOS, use Xcode's test action or `xcodebuild test` with the appropriate scheme and destination.
 
@@ -85,6 +85,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Review changes touching file, media, JSON, XML, CSV, OCR, or data parsing; examples from the scan include Crashlytics.framework/Versions/A/Resources/Info.plist, Fabric.framework/Versions/A/Resources/Info.plist, HomeScreen/Images.swift, HomeScreen/Info.plist, and 6 more.
 - Review changes touching database, model, or persistence code; examples from the scan include HomeScreen/TweetsController.swift, TwitterKit.framework/Versions/A/Headers/TWTRTweetTableViewCell.h, TwitterKit.framework/Versions/A/Headers/TWTRTweetViewDelegate.h.
 - Home screen screenshots can reveal private apps, messages, accounts, or location hints. Keep uploads user-initiated and avoid raw response or image logging.
+- Treat Twitter session state as optional on presentation paths; expired or
+  missing sessions should not crash profile-image rendering.
 
 ## Maintenance Notes
 
@@ -94,6 +96,7 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `docs/plans/2026-06-08-response-nil-safety.md` for the Twitter/image response nil-safety guardrail.
 - See `docs/plans/2026-06-08-write-response-data-guard.md` for the Twitter write response data guardrail.
 - See `docs/plans/2026-06-09-screenshot-nil-safety.md` for the Photos screenshot nil-safety guardrail.
+- See `docs/plans/2026-06-09-share-session-guard.md` for the share-screen Twitter session guardrail.
 - Run `make check` before pushing changes to plist files, Swift sources, Xcode project metadata, credential handling, or screenshot-sharing behavior.
 
 ## Contributing
