@@ -10,6 +10,7 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[1]
 PLAN = ROOT / "docs/plans/2026-06-08-ios-sharing-baseline.md"
 SCREENSHOT_PLAN = ROOT / "docs/plans/2026-06-09-screenshot-nil-safety.md"
+SCREENSHOT_FALLBACK_PLAN = ROOT / "docs/plans/2026-06-09-preview-screenshot-fallback.md"
 
 
 def require(condition, message, failures):
@@ -80,6 +81,7 @@ def main():
         "docs/plans/2026-06-08-response-nil-safety.md",
         "docs/plans/2026-06-08-write-response-data-guard.md",
         "docs/plans/2026-06-09-screenshot-nil-safety.md",
+        "docs/plans/2026-06-09-preview-screenshot-fallback.md",
     ]
 
     for relative_path in required_files:
@@ -125,6 +127,7 @@ def main():
     swift = first_party_swift()
     login = read("HomeScreen/LoginController.swift")
     share = read("HomeScreen/ShareController.swift")
+    view_controller = read("HomeScreen/ViewController.swift")
     post = read("HomeScreen/Post.swift")
     upload = read("HomeScreen/Upload.swift") + read("HomeScreen/UploadMedia.swift")
     tweep_picture = read("HomeScreen/TweepPicture.swift")
@@ -148,6 +151,11 @@ def main():
             "completion(result: nil)" in post and
             "(result: UIImage?)" in share,
             "Post.swift must safely handle nil screenshot images from Photos",
+            failures)
+    require("getScreenshotImage(screenObj) { (result: UIImage?) in" in view_controller and
+            "if let screenshot = result" in view_controller and
+            "self.showDefault()" in view_controller,
+            "ViewController must fall back to the default image when Photos returns no screenshot",
             failures)
     require("println(json)" not in upload,
             "Upload code must not print raw Twitter media-upload JSON responses",
@@ -184,10 +192,11 @@ def main():
     nil_safety_plan = read("docs/plans/2026-06-08-response-nil-safety.md")
     write_response_plan = read("docs/plans/2026-06-08-write-response-data-guard.md")
     screenshot_plan = SCREENSHOT_PLAN.read_text(encoding="utf-8") if SCREENSHOT_PLAN.exists() else ""
-    require("make check" in readme and "FABRIC_API_KEY" in readme and "NSPhotoLibraryUsageDescription" in readme and "nil-safe" in readme and "screenshot" in readme and "write response" in readme,
+    screenshot_fallback_plan = SCREENSHOT_FALLBACK_PLAN.read_text(encoding="utf-8") if SCREENSHOT_FALLBACK_PLAN.exists() else ""
+    require("make check" in readme and "FABRIC_API_KEY" in readme and "NSPhotoLibraryUsageDescription" in readme and "nil-safe" in readme and "screenshot fallback" in readme and "write response" in readme,
             "README must document static verification, Fabric credentials, and photo permission configuration",
             failures)
-    require("scripts/check-baseline.py" in vision and "photo-library" in vision and "nil-safe" in vision and "screenshot" in vision and "write response" in vision,
+    require("scripts/check-baseline.py" in vision and "photo-library" in vision and "nil-safe" in vision and "screenshot fallback" in vision and "write response" in vision,
             "VISION must describe the static baseline and photo-library guardrails",
             failures)
     require("FABRIC_API_KEY" in security and "photo-library" in security,
@@ -198,6 +207,9 @@ def main():
             failures)
     require("screenshot" in changes.lower(),
             "CHANGES must record screenshot nil-safety updates",
+            failures)
+    require("screenshot fallback" in changes.lower(),
+            "CHANGES must record screenshot fallback updates",
             failures)
     require("write response" in changes.lower(),
             "CHANGES must record write response data guarding",
@@ -222,6 +234,9 @@ def main():
             failures)
     require("status: completed" in screenshot_plan,
             "screenshot nil-safety plan must be marked completed",
+            failures)
+    require("status: completed" in screenshot_fallback_plan,
+            "screenshot fallback plan must be marked completed",
             failures)
 
     if shutil.which("xcodebuild"):

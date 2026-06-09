@@ -4,6 +4,8 @@
 
 - Made screenshot lookup nil-safe when Photos returns no image or a size
   mismatch, preserving the user-initiated sharing flow without crashing.
+- Added screenshot fallback handling in the main preview controller when Photos
+  returns no screenshot image.
 
 ## 2026-06-08
 

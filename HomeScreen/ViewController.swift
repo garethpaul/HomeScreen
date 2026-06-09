@@ -60,12 +60,15 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
             let screenObj = CGSize(width:screenSize.width*2, height: screenSize.height*2)
 
             // get Screenshot if the last known screen shot appears to be valid
-            getScreenshotImage(screenObj) { (result: UIImage) in
-
-                // set some images
-                self.homeScreen.image = result
-                self.screenShot = result
-                self.homeScreen.hidden = false
+            getScreenshotImage(screenObj) { (result: UIImage?) in
+                if let screenshot = result {
+                    // set some images
+                    self.homeScreen.image = screenshot
+                    self.screenShot = screenshot
+                    self.homeScreen.hidden = false
+                } else {
+                    self.showDefault()
+                }
             }
         } else {
 
