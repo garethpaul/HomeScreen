@@ -8,6 +8,8 @@
   returns no screenshot image.
 - Guarded share-screen Twitter session access before reading the profile user
   name for profile-image rendering.
+- Removed deprecated update_with_media helper code so the active upload flow
+  stays on the guarded media/upload path.
 
 ## 2026-06-08
 

@@ -55,7 +55,8 @@ photo-library permission describes screenshot sharing, uploads require a loaded
 image, Photos screenshot callbacks and screenshot fallback behavior are
 nil-safe, Twitter JSON, profile image, and write response data handling are
 nil-safe, share-screen Twitter session access is guarded, raw upload responses
-are not logged, and the legacy project/framework inventory remains visible.
+are not logged, deprecated update_with_media helper code stays removed, and the
+legacy project/framework inventory remains visible.
 
 ## What We Will Not Merge (For Now)
 

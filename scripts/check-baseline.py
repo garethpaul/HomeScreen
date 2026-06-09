@@ -12,6 +12,7 @@ PLAN = ROOT / "docs/plans/2026-06-08-ios-sharing-baseline.md"
 SCREENSHOT_PLAN = ROOT / "docs/plans/2026-06-09-screenshot-nil-safety.md"
 SCREENSHOT_FALLBACK_PLAN = ROOT / "docs/plans/2026-06-09-preview-screenshot-fallback.md"
 SHARE_SESSION_PLAN = ROOT / "docs/plans/2026-06-09-share-session-guard.md"
+DEPRECATED_UPLOAD_PLAN = ROOT / "docs/plans/2026-06-09-deprecated-update-with-media-removal.md"
 
 
 def require(condition, message, failures):
@@ -84,6 +85,7 @@ def main():
         "docs/plans/2026-06-09-screenshot-nil-safety.md",
         "docs/plans/2026-06-09-preview-screenshot-fallback.md",
         "docs/plans/2026-06-09-share-session-guard.md",
+        "docs/plans/2026-06-09-deprecated-update-with-media-removal.md",
     ]
 
     for relative_path in required_files:
@@ -131,7 +133,9 @@ def main():
     share = read("HomeScreen/ShareController.swift")
     view_controller = read("HomeScreen/ViewController.swift")
     post = read("HomeScreen/Post.swift")
-    upload = read("HomeScreen/Upload.swift") + read("HomeScreen/UploadMedia.swift")
+    active_upload = read("HomeScreen/Upload.swift")
+    legacy_upload = read("HomeScreen/UploadMedia.swift")
+    upload = active_upload + legacy_upload
     tweep_picture = read("HomeScreen/TweepPicture.swift")
     twitter_rest = read("HomeScreen/TwitterRESTAPI.swift")
     url_helper = read("HomeScreen/URL.swift")
@@ -161,6 +165,14 @@ def main():
             failures)
     require("println(json)" not in upload,
             "Upload code must not print raw Twitter media-upload JSON responses",
+            failures)
+    require("statuses/update_with_media.json" not in swift and
+            "func UploadMedia(media: NSData" not in legacy_upload and
+            "deprecated statuses/update_with_media helper was removed" in legacy_upload,
+            "Deprecated update_with_media helper must stay removed",
+            failures)
+    require("https://upload.twitter.com/1.1/media/upload.json" in active_upload,
+            "Active media upload must use Twitter media/upload.json",
             failures)
     require('json!["' not in swift and "profile_image_url!" not in swift,
             "Twitter response parsing must avoid force-unwrapped JSON fields",
@@ -201,10 +213,14 @@ def main():
     screenshot_plan = SCREENSHOT_PLAN.read_text(encoding="utf-8") if SCREENSHOT_PLAN.exists() else ""
     screenshot_fallback_plan = SCREENSHOT_FALLBACK_PLAN.read_text(encoding="utf-8") if SCREENSHOT_FALLBACK_PLAN.exists() else ""
     share_session_plan = SHARE_SESSION_PLAN.read_text(encoding="utf-8") if SHARE_SESSION_PLAN.exists() else ""
+    deprecated_upload_plan = DEPRECATED_UPLOAD_PLAN.read_text(encoding="utf-8") if DEPRECATED_UPLOAD_PLAN.exists() else ""
     require("make check" in readme and "FABRIC_API_KEY" in readme and "NSPhotoLibraryUsageDescription" in readme and "nil-safe" in readme and "screenshot fallback" in readme and "write response" in readme and "Twitter session" in readme,
             "README must document static verification, Fabric credentials, and photo permission configuration",
             failures)
-    require("scripts/check-baseline.py" in vision and "photo-library" in vision and "nil-safe" in vision and "screenshot fallback" in vision and "write response" in vision and "Twitter session" in vision,
+    require("deprecated update_with_media" in readme,
+            "README must document deprecated update_with_media removal",
+            failures)
+    require("scripts/check-baseline.py" in vision and "photo-library" in vision and "nil-safe" in vision and "screenshot fallback" in vision and "write response" in vision and "Twitter session" in vision and "deprecated update_with_media" in vision,
             "VISION must describe the static baseline and photo-library guardrails",
             failures)
     require("FABRIC_API_KEY" in security and "photo-library" in security,
@@ -224,6 +240,9 @@ def main():
             failures)
     require("Twitter session" in changes,
             "CHANGES must record share-screen Twitter session guarding",
+            failures)
+    require("deprecated update_with_media" in changes,
+            "CHANGES must record deprecated update_with_media removal",
             failures)
     require("JSONObjectWithData(data" not in swift,
             "Twitter JSON parsing must guard optional response data before deserialization",
@@ -251,6 +270,9 @@ def main():
             failures)
     require("status: completed" in share_session_plan,
             "share session guard plan must be marked completed",
+            failures)
+    require("status: completed" in deprecated_upload_plan,
+            "deprecated upload helper plan must be marked completed",
             failures)
 
     if shutil.which("xcodebuild"):
