@@ -23,6 +23,8 @@ Priority:
 - Keep `scripts/check-baseline.py` passing for credential placeholders, plist
   permissions, nil-safe response parsing, Swift source guardrails, and static
   project inventory
+- Keep `make lint`, `make test`, `make build`, and `make check` available as
+  local verification gates
 
 Next priorities:
 
@@ -49,7 +51,8 @@ logging images without explicit action.
 
 Twitter credentials and session data must remain out of source control.
 
-Current baseline: `make check` runs `scripts/check-baseline.py` without Xcode.
+Current baseline: `make lint`, `make test`, `make build`, and `make check`
+run `scripts/check-baseline.py` without Xcode.
 It verifies that the Fabric build phase uses local placeholders, the
 photo-library permission describes screenshot sharing, uploads require a loaded
 image, Photos screenshot callbacks and screenshot fallback behavior are

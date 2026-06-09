@@ -43,6 +43,9 @@ Additional scan context:
 ```bash
 git clone https://github.com/garethpaul/HomeScreen.git
 cd HomeScreen
+make lint
+make test
+make build
 make check
 ```
 
@@ -61,8 +64,15 @@ The setup commands above are derived from repository files. The checked-in frame
 Run the local static baseline:
 
 ```bash
+make lint
+make test
+make build
 make check
 ```
+
+The `lint`, `test`, and `build` targets intentionally alias the static baseline
+on hosts without the legacy Xcode toolchain, so the standard local gate commands
+stay available while preserving the single source of truth.
 
 The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace XML, checks the Xcode project metadata, verifies the legacy Swift and framework inventory, and guards against checked-in Fabric credential literals, missing photo-library permission text, unsafe empty-screenshot uploads, nil screenshot callbacks, screenshot fallback behavior, nil-safe Twitter/profile image and write response handling, missing Twitter session guards on the share screen, raw Twitter upload-response logging, deprecated update_with_media helper code, and invalid hex color parsing.
 
@@ -99,7 +109,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - See `docs/plans/2026-06-09-share-session-guard.md` for the share-screen Twitter session guardrail.
 - See `docs/plans/2026-06-09-deprecated-update-with-media-removal.md` for the
   deprecated update_with_media removal guardrail.
-- Run `make check` before pushing changes to plist files, Swift sources, Xcode project metadata, credential handling, or screenshot-sharing behavior.
+- See `docs/plans/2026-06-09-make-gate-aliases.md` for the local gate alias guardrail.
+- Run `make lint`, `make test`, `make build`, and `make check` before pushing changes to plist files, Swift sources, Xcode project metadata, credential handling, or screenshot-sharing behavior.
 
 ## Contributing
 

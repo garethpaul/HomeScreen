@@ -2,6 +2,8 @@
 
 ## 2026-06-09
 
+- Added local `make lint`, `make test`, and `make build` gate aliases for the
+  static iOS sharing baseline.
 - Made screenshot lookup nil-safe when Photos returns no image or a size
   mismatch, preserving the user-initiated sharing flow without crashing.
 - Added screenshot fallback handling in the main preview controller when Photos
