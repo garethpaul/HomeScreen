@@ -80,6 +80,12 @@ compression quality and skip upload when image encoding fails.
 It also guards tweet feed failures so search/login errors complete safely and
 the loading indicator is cleared without force-casting returned tweet objects.
 
+The pinned GitHub Actions check runs `make check` on `macos-15`. When Xcode is
+available, the baseline also runs `xcodebuild -list -project HomeScreen.xcodeproj`
+to verify that the checked-in project can be parsed by the hosted toolchain.
+This does not exercise retired Twitter/Fabric services, account credentials,
+signing, simulator behavior, or the end-to-end sharing flow.
+
 For full legacy verification on macOS, use Xcode's test action or `xcodebuild test` with the appropriate scheme and destination.
 
 When the required SDK or runtime is unavailable, use static checks and source review first, then verify on a machine that has the matching platform toolchain.

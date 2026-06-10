@@ -34,6 +34,9 @@ Helpful reports include:
 - No primary dependency manifest was detected in the repository root. If dependencies are added later, include a manifest and prefer reproducible installation instructions.
 - Fabric credentials must be supplied locally through `FABRIC_API_KEY` and `FABRIC_BUILD_SECRET`. Do not commit real Fabric, Twitter, signing, screenshot, xcconfig, or environment values.
 - `make check` runs a static privacy baseline that guards against credential literals, missing photo-library purpose text, unsafe empty-screenshot uploads, raw Twitter upload-response logging, plist drift, and first-party Swift guardrail drift when Xcode is unavailable.
+- The pinned macOS workflow uses read-only repository permissions and runs the
+  same baseline. Its Xcode project parse does not require or inject Fabric,
+  Twitter, signing, or account credentials.
 
 ## Mobile Privacy Notes
 

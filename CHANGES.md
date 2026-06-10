@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-10
+
+- Added pinned, read-only macOS CI for the canonical `make check` baseline.
+- Made Xcode-enabled checks parse `HomeScreen.xcodeproj` instead of only
+  printing a manual verification reminder.
+
 ## 2026-06-09
 
 - Guarded tweet feed failures so Twitter search/login errors complete safely,
