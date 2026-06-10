@@ -45,6 +45,8 @@ If this project requests device permissions such as location, camera, microphone
 Home screen screenshots and photo-library contents can reveal private apps, conversations, accounts, or location hints. Photo-library access should remain user-visible, uploads should remain user-initiated, and upload responses or image data should not be logged.
 Tweet feed failures should complete without forcing optional error values or
 leaving the feed in a loading state after Twitter search or guest-login errors.
+Profile-image requests should complete explicitly on malformed or failed
+responses rather than leaving account-adjacent presentation state unresolved.
 
 ## Dependency and Supply Chain Security
 

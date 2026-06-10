@@ -28,6 +28,8 @@ Priority:
 - Keep JPEG media data generation guarded before screenshot uploads
 - Keep tweet feed failures recoverable so search/login errors clear loading
   state instead of crashing or hanging
+- Keep profile-image lookup completion total across request and response
+  failures so presentation setup does not hang
 - Keep pinned macOS CI parsing `HomeScreen.xcodeproj` through the canonical
   `make check` gate
 

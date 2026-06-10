@@ -5,7 +5,7 @@
 import Foundation
 import TwitterKit
 
-func TweepPicture(handle: String, completion: (result: String) -> Void) {
+func TweepPicture(handle: String, completion: (result: String?) -> Void) {
 
     typealias JSON = AnyObject
     typealias JSONDictionary = Dictionary<String, JSON>
@@ -45,6 +45,7 @@ func TweepPicture(handle: String, completion: (result: String) -> Void) {
 
                             // Complete and return the profile_image_url back.
                             completion(result: profileImageURL)
+                            return
                         }
                     }
                 }
@@ -53,10 +54,12 @@ func TweepPicture(handle: String, completion: (result: String) -> Void) {
             else {
                 println("Error: \(connectionError)")
             }
+            completion(result: nil)
         }
     }
     else {
         println("Error: \(clientError)")
+        completion(result: nil)
     }
     
 }

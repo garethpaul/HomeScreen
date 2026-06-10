@@ -79,6 +79,9 @@ It also guards JPEG media data creation so screenshot uploads use a valid
 compression quality and skip upload when image encoding fails.
 It also guards tweet feed failures so search/login errors complete safely and
 the loading indicator is cleared without force-casting returned tweet objects.
+Profile-image lookup now completes with an optional result on request,
+transport, JSON, and missing-field failures so share-screen setup cannot wait
+indefinitely for a callback.
 
 The pinned GitHub Actions check runs `make check` on `macos-15`. When Xcode is
 available, the baseline also runs `xcodebuild -list -project HomeScreen.xcodeproj`
@@ -125,6 +128,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
   upload guardrail.
 - See `docs/plans/2026-06-09-tweet-feed-failure-guard.md` for the tweet feed
   failures guardrail.
+- See `docs/plans/2026-06-10-profile-image-completion.md` for total
+  profile-image lookup completion semantics.
 - See `docs/plans/2026-06-09-make-gate-aliases.md` for the local gate alias guardrail.
 - Run `make lint`, `make test`, `make build`, and `make check` before pushing changes to plist files, Swift sources, Xcode project metadata, credential handling, or screenshot-sharing behavior.
 

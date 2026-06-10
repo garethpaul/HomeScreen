@@ -2,6 +2,8 @@
 
 ## 2026-06-10
 
+- Made profile-image lookup complete with `nil` on request, transport, JSON,
+  and missing-field failures instead of silently abandoning the callback.
 - Added pinned, read-only macOS CI for the canonical `make check` baseline.
 - Made Xcode-enabled checks parse `HomeScreen.xcodeproj` instead of only
   printing a manual verification reminder.

@@ -18,6 +18,7 @@ DEPRECATED_UPLOAD_PLAN = ROOT / "docs/plans/2026-06-09-deprecated-update-with-me
 JPEG_MEDIA_PLAN = ROOT / "docs/plans/2026-06-09-jpeg-media-data-guard.md"
 TWEET_FEED_PLAN = ROOT / "docs/plans/2026-06-09-tweet-feed-failure-guard.md"
 HOSTED_VALIDATION_PLAN = ROOT / "docs/plans/2026-06-10-hosted-project-validation.md"
+TWEEP_PICTURE_PLAN = ROOT / "docs/plans/2026-06-10-profile-image-completion.md"
 
 
 def require(condition, message, failures):
@@ -96,6 +97,7 @@ def main():
         "docs/plans/2026-06-09-jpeg-media-data-guard.md",
         "docs/plans/2026-06-09-tweet-feed-failure-guard.md",
         "docs/plans/2026-06-10-hosted-project-validation.md",
+        "docs/plans/2026-06-10-profile-image-completion.md",
     ]
 
     for relative_path in required_files:
@@ -196,6 +198,12 @@ def main():
             "if let profileImageURL = jsonDictionary[\"profile_image_url\"] as? String" in tweep_picture,
             "TweepPicture must safely unwrap profile image URLs",
             failures)
+    require("completion: (result: String?) -> Void" in tweep_picture and
+            tweep_picture.count("completion(result: nil)") >= 2 and
+            "(result: String?)" in share and
+            "if let url_string = result" in share,
+            "Profile image lookup must complete explicitly on request and response failures",
+            failures)
     require("if let statuses = jsonDictionary[\"statuses\"] as? JSONArray" in twitter_rest,
             "Twitter search parsing must safely unwrap statuses arrays",
             failures)
@@ -246,6 +254,7 @@ def main():
     jpeg_media_plan = JPEG_MEDIA_PLAN.read_text(encoding="utf-8") if JPEG_MEDIA_PLAN.exists() else ""
     tweet_feed_plan = TWEET_FEED_PLAN.read_text(encoding="utf-8") if TWEET_FEED_PLAN.exists() else ""
     hosted_validation_plan = HOSTED_VALIDATION_PLAN.read_text(encoding="utf-8") if HOSTED_VALIDATION_PLAN.exists() else ""
+    tweep_picture_plan = TWEEP_PICTURE_PLAN.read_text(encoding="utf-8") if TWEEP_PICTURE_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     require(".PHONY: build check lint test" in makefile and "lint test build: check" in makefile,
             "Makefile must expose lint, test, and build aliases for the local baseline",
@@ -327,6 +336,9 @@ def main():
             failures)
     require("status: completed" in hosted_validation_plan and "make check" in hosted_validation_plan,
             "hosted project validation plan must be completed and document make check",
+            failures)
+    require("status: completed" in tweep_picture_plan and "make check" in tweep_picture_plan,
+            "profile image completion plan must be completed and document verification",
             failures)
     require("permissions:\n  contents: read" in workflow,
             "Check workflow must use read-only repository permissions",
