@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-12
+
+- Switched profile-image lookup to Twitter's `profile_image_url_https` response
+  field so dynamic image downloads cannot fall back to cleartext HTTP.
+
 ## 2026-06-10
 
 - Documented and enforced the legacy SDK modernization boundary for the Swift
