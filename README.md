@@ -82,6 +82,8 @@ the loading indicator is cleared without force-casting returned tweet objects.
 Profile-image lookup now completes with an optional result on request,
 transport, JSON, and missing-field failures so share-screen setup cannot wait
 indefinitely for a callback.
+It reads Twitter's `profile_image_url_https` field so dynamic response URLs
+cannot downgrade profile image downloads to cleartext HTTP.
 
 The pinned GitHub Actions check runs `make check` on `macos-15`. When Xcode is
 available, the baseline also runs `xcodebuild -list -project HomeScreen.xcodeproj`

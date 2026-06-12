@@ -53,6 +53,8 @@ Tweet feed failures should complete without forcing optional error values or
 leaving the feed in a loading state after Twitter search or guest-login errors.
 Profile-image requests should complete explicitly on malformed or failed
 responses rather than leaving account-adjacent presentation state unresolved.
+Profile-image metadata must use Twitter's `profile_image_url_https` field; the
+legacy `profile_image_url` response can downgrade dynamic downloads to HTTP.
 
 ## Dependency and Supply Chain Security
 

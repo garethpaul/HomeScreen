@@ -30,6 +30,8 @@ Priority:
   state instead of crashing or hanging
 - Keep profile-image lookup completion total across request and response
   failures so presentation setup does not hang
+- Keep profile image transport on Twitter's `profile_image_url_https` response
+  field instead of the legacy cleartext-capable key
 - Keep pinned macOS CI parsing `HomeScreen.xcodeproj` through the canonical
   `make check` gate
 
@@ -70,6 +72,8 @@ legacy project/framework inventory remains visible. JPEG media data creation
 must use a valid compression quality and be guarded before upload.
 Tweet feed failures must complete safely and clear loading state when Twitter
 search or guest-login setup fails.
+Dynamic profile image downloads must originate from `profile_image_url_https`
+because literal source endpoint checks cannot validate response-provided URLs.
 On macOS, the same baseline must use `xcodebuild -list` to confirm that Xcode
 can parse the project. Functional sharing remains a separate manual check
 because it depends on credentials, signing, device state, and retired services.

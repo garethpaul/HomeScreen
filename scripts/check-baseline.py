@@ -20,6 +20,7 @@ TWEET_FEED_PLAN = ROOT / "docs/plans/2026-06-09-tweet-feed-failure-guard.md"
 MODERNIZATION_PLAN = ROOT / "docs/plans/2026-06-10-legacy-sdk-modernization-boundary.md"
 HOSTED_VALIDATION_PLAN = ROOT / "docs/plans/2026-06-10-hosted-project-validation.md"
 TWEEP_PICTURE_PLAN = ROOT / "docs/plans/2026-06-10-profile-image-completion.md"
+HTTPS_PROFILE_IMAGE_PLAN = ROOT / "docs/plans/2026-06-12-https-profile-image-url.md"
 
 
 def require(condition, message, failures):
@@ -100,6 +101,7 @@ def main():
         "docs/plans/2026-06-10-legacy-sdk-modernization-boundary.md",
         "docs/plans/2026-06-10-hosted-project-validation.md",
         "docs/plans/2026-06-10-profile-image-completion.md",
+        "docs/plans/2026-06-12-https-profile-image-url.md",
     ]
 
     for relative_path in required_files:
@@ -197,8 +199,9 @@ def main():
             "Twitter response parsing must avoid force-unwrapped JSON fields",
             failures)
     require("if let jsonDictionary = json as? JSONDictionary" in tweep_picture and
-            "if let profileImageURL = jsonDictionary[\"profile_image_url\"] as? String" in tweep_picture,
-            "TweepPicture must safely unwrap profile image URLs",
+            "if let profileImageURL = jsonDictionary[\"profile_image_url_https\"] as? String" in tweep_picture and
+            'jsonDictionary["profile_image_url"]' not in tweep_picture,
+            "TweepPicture must safely unwrap only the HTTPS profile image URL",
             failures)
     require("completion: (result: String?) -> Void" in tweep_picture and
             tweep_picture.count("completion(result: nil)") >= 2 and
@@ -258,6 +261,7 @@ def main():
     modernization_plan = MODERNIZATION_PLAN.read_text(encoding="utf-8") if MODERNIZATION_PLAN.exists() else ""
     hosted_validation_plan = HOSTED_VALIDATION_PLAN.read_text(encoding="utf-8") if HOSTED_VALIDATION_PLAN.exists() else ""
     tweep_picture_plan = TWEEP_PICTURE_PLAN.read_text(encoding="utf-8") if TWEEP_PICTURE_PLAN.exists() else ""
+    https_profile_image_plan = HTTPS_PROFILE_IMAGE_PLAN.read_text(encoding="utf-8") if HTTPS_PROFILE_IMAGE_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     require(".PHONY: build check lint test" in makefile and "lint test build: check" in makefile,
             "Makefile must expose lint, test, and build aliases for the local baseline",
@@ -357,6 +361,15 @@ def main():
             failures)
     require("status: completed" in tweep_picture_plan and "make check" in tweep_picture_plan,
             "profile image completion plan must be completed and document verification",
+            failures)
+    require("status: completed" in https_profile_image_plan and "make check" in https_profile_image_plan,
+            "HTTPS profile image plan must be completed and document verification",
+            failures)
+    require("profile_image_url_https" in readme and
+            "profile_image_url_https" in vision and
+            "profile_image_url_https" in security and
+            "profile_image_url_https" in changes,
+            "Docs must preserve the dynamic HTTPS profile-image response boundary",
             failures)
     require("permissions:\n  contents: read" in workflow,
             "Check workflow must use read-only repository permissions",

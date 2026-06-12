@@ -39,11 +39,11 @@ func TweepPicture(handle: String, completion: (result: String?) -> Void) {
                 if let responseData = data {
                     let json : AnyObject? = NSJSONSerialization.JSONObjectWithData(responseData, options: nil, error: &jsonError)
 
-                    // find the profile image from the json object e.g. {"profile_image_url": ...}
+                    // Find the encrypted profile image URL in the response.
                     if let jsonDictionary = json as? JSONDictionary {
-                        if let profileImageURL = jsonDictionary["profile_image_url"] as? String {
+                        if let profileImageURL = jsonDictionary["profile_image_url_https"] as? String {
 
-                            // Complete and return the profile_image_url back.
+                            // Complete with the encrypted profile image URL.
                             completion(result: profileImageURL)
                             return
                         }
