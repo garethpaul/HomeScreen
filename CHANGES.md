@@ -1,5 +1,10 @@
 # Changes
 
+## 2026-06-10
+
+- Documented and enforced the legacy SDK modernization boundary for the Swift
+  1-era, iOS 8.1, Fabric, Crashlytics, and TwitterKit baseline.
+
 ## 2026-06-09
 
 - Guarded tweet feed failures so Twitter search/login errors complete safely,

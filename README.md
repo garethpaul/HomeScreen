@@ -106,6 +106,13 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 ## Maintenance Notes
 
+This is an archival Swift 1-era baseline with an iOS 8.1 deployment target and
+vendored Fabric, Crashlytics, and TwitterKit binaries. Those services and SDKs
+are retired, so the project is not expected to build unchanged with a current
+SDK. Follow `docs/plans/2026-06-10-legacy-sdk-modernization-boundary.md` and
+replace the integrations before attempting a broad Swift or deployment-target
+migration.
+
 - This looks like an Apple platform project or sample. Xcode, Swift, CocoaPods, and deployment target versions may need to match the original project era.
 - See `SECURITY.md` for vulnerability reporting and safe research guidance.
 - See `VISION.md` for project direction and contribution guardrails.

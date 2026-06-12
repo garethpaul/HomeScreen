@@ -67,6 +67,13 @@ must use a valid compression quality and be guarded before upload.
 Tweet feed failures must complete safely and clear loading state when Twitter
 search or guest-login setup fails.
 
+## Modernization Boundary
+
+The current repository preserves a Swift 1-era, iOS 8.1 application with
+retired Fabric, Crashlytics, and TwitterKit binaries. Modernization must replace
+those integrations, isolate Twitter REST and media-upload behavior, then convert
+Swift and UIKit APIs in independently verifiable stages.
+
 ## What We Will Not Merge (For Now)
 
 - Hardcoded Twitter/Fabric credentials
