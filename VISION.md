@@ -74,6 +74,13 @@ On macOS, the same baseline must use `xcodebuild -list` to confirm that Xcode
 can parse the project. Functional sharing remains a separate manual check
 because it depends on credentials, signing, device state, and retired services.
 
+## Modernization Boundary
+
+The current repository preserves a Swift 1-era, iOS 8.1 application with
+retired Fabric, Crashlytics, and TwitterKit binaries. Modernization must replace
+those integrations, isolate Twitter REST and media-upload behavior, then convert
+Swift and UIKit APIs in independently verifiable stages.
+
 ## What We Will Not Merge (For Now)
 
 - Hardcoded Twitter/Fabric credentials

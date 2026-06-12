@@ -2,6 +2,8 @@
 
 ## 2026-06-10
 
+- Documented and enforced the legacy SDK modernization boundary for the Swift
+  1-era, iOS 8.1, Fabric, Crashlytics, and TwitterKit baseline.
 - Made profile-image lookup complete with `nil` on request, transport, JSON,
   and missing-field failures instead of silently abandoning the callback.
 - Added pinned, read-only macOS CI for the canonical `make check` baseline.

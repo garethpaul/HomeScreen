@@ -17,6 +17,7 @@ SHARE_SESSION_PLAN = ROOT / "docs/plans/2026-06-09-share-session-guard.md"
 DEPRECATED_UPLOAD_PLAN = ROOT / "docs/plans/2026-06-09-deprecated-update-with-media-removal.md"
 JPEG_MEDIA_PLAN = ROOT / "docs/plans/2026-06-09-jpeg-media-data-guard.md"
 TWEET_FEED_PLAN = ROOT / "docs/plans/2026-06-09-tweet-feed-failure-guard.md"
+MODERNIZATION_PLAN = ROOT / "docs/plans/2026-06-10-legacy-sdk-modernization-boundary.md"
 HOSTED_VALIDATION_PLAN = ROOT / "docs/plans/2026-06-10-hosted-project-validation.md"
 TWEEP_PICTURE_PLAN = ROOT / "docs/plans/2026-06-10-profile-image-completion.md"
 
@@ -96,6 +97,7 @@ def main():
         "docs/plans/2026-06-09-deprecated-update-with-media-removal.md",
         "docs/plans/2026-06-09-jpeg-media-data-guard.md",
         "docs/plans/2026-06-09-tweet-feed-failure-guard.md",
+        "docs/plans/2026-06-10-legacy-sdk-modernization-boundary.md",
         "docs/plans/2026-06-10-hosted-project-validation.md",
         "docs/plans/2026-06-10-profile-image-completion.md",
     ]
@@ -253,6 +255,7 @@ def main():
     deprecated_upload_plan = DEPRECATED_UPLOAD_PLAN.read_text(encoding="utf-8") if DEPRECATED_UPLOAD_PLAN.exists() else ""
     jpeg_media_plan = JPEG_MEDIA_PLAN.read_text(encoding="utf-8") if JPEG_MEDIA_PLAN.exists() else ""
     tweet_feed_plan = TWEET_FEED_PLAN.read_text(encoding="utf-8") if TWEET_FEED_PLAN.exists() else ""
+    modernization_plan = MODERNIZATION_PLAN.read_text(encoding="utf-8") if MODERNIZATION_PLAN.exists() else ""
     hosted_validation_plan = HOSTED_VALIDATION_PLAN.read_text(encoding="utf-8") if HOSTED_VALIDATION_PLAN.exists() else ""
     tweep_picture_plan = TWEEP_PICTURE_PLAN.read_text(encoding="utf-8") if TWEEP_PICTURE_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
@@ -295,6 +298,18 @@ def main():
     require("tweet feed failures" in changes,
             "CHANGES must record tweet feed failure guarding",
             failures)
+    require("Swift 1-era" in readme and "iOS 8.1" in readme and "Fabric" in readme and "TwitterKit" in readme,
+            "README must document the legacy SDK modernization boundary",
+            failures)
+    require("Swift 1-era" in vision and "iOS 8.1" in vision and "modernization" in vision.lower(),
+            "VISION must document the legacy SDK modernization sequence",
+            failures)
+    require("retired" in security and "Crashlytics" in security and "current SDK" in security,
+            "SECURITY must identify retired SDK and current-toolchain risk",
+            failures)
+    require("legacy SDK modernization boundary" in changes,
+            "CHANGES must record the legacy SDK modernization boundary",
+            failures)
     require("JSONObjectWithData(data" not in swift,
             "Twitter JSON parsing must guard optional response data before deserialization",
             failures)
@@ -334,6 +349,9 @@ def main():
     require("status: completed" in tweet_feed_plan,
             "tweet feed failure guard plan must be marked completed",
             failures)
+    require("status: completed" in modernization_plan and "Swift 1-era" in modernization_plan and "iOS 8.1" in modernization_plan,
+            "legacy SDK modernization boundary must be completed and version-specific",
+            failures)
     require("status: completed" in hosted_validation_plan and "make check" in hosted_validation_plan,
             "hosted project validation plan must be completed and document make check",
             failures)
@@ -348,8 +366,9 @@ def main():
             "Check workflow must bound duplicate and long-running macOS jobs",
             failures)
     require("actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" in workflow and
+            "persist-credentials: false" in workflow and
             "run: make check" in workflow,
-            "Check workflow must pin checkout and run the canonical baseline",
+            "Check workflow must pin checkout without persisted credentials and run the canonical baseline",
             failures)
 
     if shutil.which("xcodebuild"):
