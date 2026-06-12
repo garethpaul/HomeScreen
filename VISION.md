@@ -28,6 +28,10 @@ Priority:
 - Keep JPEG media data generation guarded before screenshot uploads
 - Keep tweet feed failures recoverable so search/login errors clear loading
   state instead of crashing or hanging
+- Keep profile-image lookup completion total across request and response
+  failures so presentation setup does not hang
+- Keep pinned macOS CI parsing `HomeScreen.xcodeproj` through the canonical
+  `make check` gate
 
 Next priorities:
 
@@ -66,6 +70,9 @@ legacy project/framework inventory remains visible. JPEG media data creation
 must use a valid compression quality and be guarded before upload.
 Tweet feed failures must complete safely and clear loading state when Twitter
 search or guest-login setup fails.
+On macOS, the same baseline must use `xcodebuild -list` to confirm that Xcode
+can parse the project. Functional sharing remains a separate manual check
+because it depends on credentials, signing, device state, and retired services.
 
 ## Modernization Boundary
 

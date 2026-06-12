@@ -58,18 +58,18 @@ class ShareController: UIViewController{
         if let session = Twitter.sharedInstance().session() {
             let userName = session.userName
             // we need pictures then we are good
-            TweepPicture(userName){ (result: String) in
-
-                let url = URL()
-                let url_string = result
-                if let profileURL = NSURL(string: url_string) {
-                    url.downloadImage(profileURL, {image, error in
-                        if let newImg = image {
-                            let circle = CircleImage(RBResizeImage(newImg, CGSize(width: 100, height: 100)))
-                            self.profilePic!.image = circle
-                            self.profilePic.hidden = true
-                        }
-                    })
+            TweepPicture(userName){ (result: String?) in
+                if let url_string = result {
+                    let url = URL()
+                    if let profileURL = NSURL(string: url_string) {
+                        url.downloadImage(profileURL, {image, error in
+                            if let newImg = image {
+                                let circle = CircleImage(RBResizeImage(newImg, CGSize(width: 100, height: 100)))
+                                self.profilePic!.image = circle
+                                self.profilePic.hidden = true
+                            }
+                        })
+                    }
                 }
             }
         }

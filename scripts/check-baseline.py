@@ -3,6 +3,7 @@ from pathlib import Path
 import plistlib
 import re
 import shutil
+import subprocess
 import sys
 import xml.etree.ElementTree as ET
 
@@ -17,6 +18,8 @@ DEPRECATED_UPLOAD_PLAN = ROOT / "docs/plans/2026-06-09-deprecated-update-with-me
 JPEG_MEDIA_PLAN = ROOT / "docs/plans/2026-06-09-jpeg-media-data-guard.md"
 TWEET_FEED_PLAN = ROOT / "docs/plans/2026-06-09-tweet-feed-failure-guard.md"
 MODERNIZATION_PLAN = ROOT / "docs/plans/2026-06-10-legacy-sdk-modernization-boundary.md"
+HOSTED_VALIDATION_PLAN = ROOT / "docs/plans/2026-06-10-hosted-project-validation.md"
+TWEEP_PICTURE_PLAN = ROOT / "docs/plans/2026-06-10-profile-image-completion.md"
 
 
 def require(condition, message, failures):
@@ -57,6 +60,7 @@ def main():
     required_files = [
         ".gitignore",
         "CHANGES.md",
+        ".github/workflows/check.yml",
         "Makefile",
         "README.md",
         "SECURITY.md",
@@ -94,6 +98,8 @@ def main():
         "docs/plans/2026-06-09-jpeg-media-data-guard.md",
         "docs/plans/2026-06-09-tweet-feed-failure-guard.md",
         "docs/plans/2026-06-10-legacy-sdk-modernization-boundary.md",
+        "docs/plans/2026-06-10-hosted-project-validation.md",
+        "docs/plans/2026-06-10-profile-image-completion.md",
     ]
 
     for relative_path in required_files:
@@ -194,6 +200,12 @@ def main():
             "if let profileImageURL = jsonDictionary[\"profile_image_url\"] as? String" in tweep_picture,
             "TweepPicture must safely unwrap profile image URLs",
             failures)
+    require("completion: (result: String?) -> Void" in tweep_picture and
+            tweep_picture.count("completion(result: nil)") >= 2 and
+            "(result: String?)" in share and
+            "if let url_string = result" in share,
+            "Profile image lookup must complete explicitly on request and response failures",
+            failures)
     require("if let statuses = jsonDictionary[\"statuses\"] as? JSONArray" in twitter_rest,
             "Twitter search parsing must safely unwrap statuses arrays",
             failures)
@@ -244,6 +256,9 @@ def main():
     jpeg_media_plan = JPEG_MEDIA_PLAN.read_text(encoding="utf-8") if JPEG_MEDIA_PLAN.exists() else ""
     tweet_feed_plan = TWEET_FEED_PLAN.read_text(encoding="utf-8") if TWEET_FEED_PLAN.exists() else ""
     modernization_plan = MODERNIZATION_PLAN.read_text(encoding="utf-8") if MODERNIZATION_PLAN.exists() else ""
+    hosted_validation_plan = HOSTED_VALIDATION_PLAN.read_text(encoding="utf-8") if HOSTED_VALIDATION_PLAN.exists() else ""
+    tweep_picture_plan = TWEEP_PICTURE_PLAN.read_text(encoding="utf-8") if TWEEP_PICTURE_PLAN.exists() else ""
+    workflow = read(".github/workflows/check.yml")
     require(".PHONY: build check lint test" in makefile and "lint test build: check" in makefile,
             "Makefile must expose lint, test, and build aliases for the local baseline",
             failures)
@@ -337,9 +352,36 @@ def main():
     require("status: completed" in modernization_plan and "Swift 1-era" in modernization_plan and "iOS 8.1" in modernization_plan,
             "legacy SDK modernization boundary must be completed and version-specific",
             failures)
+    require("status: completed" in hosted_validation_plan and "make check" in hosted_validation_plan,
+            "hosted project validation plan must be completed and document make check",
+            failures)
+    require("status: completed" in tweep_picture_plan and "make check" in tweep_picture_plan,
+            "profile image completion plan must be completed and document verification",
+            failures)
+    require("permissions:\n  contents: read" in workflow,
+            "Check workflow must use read-only repository permissions",
+            failures)
+    require("cancel-in-progress: true" in workflow and "runs-on: macos-15" in workflow and
+            "timeout-minutes: 10" in workflow,
+            "Check workflow must bound duplicate and long-running macOS jobs",
+            failures)
+    require("actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10" in workflow and
+            "persist-credentials: false" in workflow and
+            "run: make check" in workflow,
+            "Check workflow must pin checkout without persisted credentials and run the canonical baseline",
+            failures)
 
     if shutil.which("xcodebuild"):
-        print("xcodebuild is available; run a scheme-specific Xcode test on macOS before release.")
+        result = subprocess.run(
+            ["xcodebuild", "-list", "-project", "HomeScreen.xcodeproj"],
+            cwd=ROOT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+        require(result.returncode == 0,
+                "xcodebuild could not parse HomeScreen.xcodeproj: " + result.stderr.strip(),
+                failures)
     else:
         print("xcodebuild unavailable; static iOS baseline only.")
 
