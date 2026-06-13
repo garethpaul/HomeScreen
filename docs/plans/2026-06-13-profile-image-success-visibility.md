@@ -1,6 +1,6 @@
 # Reveal Successful Profile Images
 
-status: planned
+status: completed
 
 ## Context
 
@@ -43,8 +43,24 @@ therefore never visible.
 
 ## Work Completed
 
-Pending implementation.
+- Kept the avatar hidden while profile lookup and download are unresolved.
+- Revealed the image view only after the downloaded image was transformed and
+  assigned to `profilePic`.
+- Added callback-scoped ordering and visibility-count contracts without
+  changing profile lookup, transport, authentication, or completion behavior.
+- Updated the sharing, security, vision, and change documentation.
 
 ## Verification Completed
 
-Pending implementation and verification.
+- All four Make gates passed locally and reported that `xcodebuild` was
+  unavailable, so only the static iOS sharing baseline ran on this host.
+- `python3 -m py_compile scripts/check-baseline.py` and `git diff --check`
+  passed.
+- Six isolated hostile mutations were rejected: removed reveal, inverted
+  success visibility, reveal before assignment, removed initial hiding, stale
+  plan status, and missing verification evidence.
+- Exact-base comparison confirmed vendored frameworks, Pods, lockfiles, Xcode
+  project metadata, and hosted workflow configuration remained unchanged.
+- Intended-file generated-artifact and secret-pattern scans passed.
+- Hosted macOS project validation and CodeQL evidence is recorded separately
+  after push; this plan claims only the completed local static verification.

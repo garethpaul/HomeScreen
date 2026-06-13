@@ -66,7 +66,7 @@ class ShareController: UIViewController{
                             if let newImg = image {
                                 let circle = CircleImage(RBResizeImage(newImg, CGSize(width: 100, height: 100)))
                                 self.profilePic!.image = circle
-                                self.profilePic.hidden = true
+                                self.profilePic.hidden = false
                             }
                         })
                     }

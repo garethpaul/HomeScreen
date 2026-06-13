@@ -77,6 +77,8 @@ Tweet feed failures must complete safely and clear loading state when Twitter
 search or guest-login setup fails.
 Dynamic profile image downloads must originate from `profile_image_url_https`
 because literal source endpoint checks cannot validate response-provided URLs.
+Successful profile images become visible only after the transformed image is
+assigned; every failure path keeps the avatar hidden.
 On macOS, the same baseline must use `xcodebuild -list` to confirm that Xcode
 can parse the project. Functional sharing remains a separate manual check
 because it depends on credentials, signing, device state, and retired services.

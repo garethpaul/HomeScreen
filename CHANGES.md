@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Reveal the profile image only after a successful download and transformed
+  image assignment; failed lookup paths retain the initial hidden state.
 - Made media upload completion return an optional identifier across request,
   transport, response, JSON, and missing-ID failures; removed upload transport
   error logging and guarded status submission on successful media ID extraction.

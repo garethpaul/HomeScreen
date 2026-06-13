@@ -22,6 +22,7 @@ HOSTED_VALIDATION_PLAN = ROOT / "docs/plans/2026-06-10-hosted-project-validation
 TWEEP_PICTURE_PLAN = ROOT / "docs/plans/2026-06-10-profile-image-completion.md"
 HTTPS_PROFILE_IMAGE_PLAN = ROOT / "docs/plans/2026-06-12-https-profile-image-url.md"
 MEDIA_UPLOAD_PLAN = ROOT / "docs/plans/2026-06-13-media-upload-completion.md"
+PROFILE_VISIBILITY_PLAN = ROOT / "docs/plans/2026-06-13-profile-image-success-visibility.md"
 
 
 def require(condition, message, failures):
@@ -122,6 +123,7 @@ def main():
         "docs/plans/2026-06-10-profile-image-completion.md",
         "docs/plans/2026-06-12-https-profile-image-url.md",
         "docs/plans/2026-06-13-media-upload-completion.md",
+        "docs/plans/2026-06-13-profile-image-success-visibility.md",
     ]
 
     for relative_path in required_files:
@@ -229,6 +231,21 @@ def main():
             "if let url_string = result" in share,
             "Profile image lookup must complete explicitly on request and response failures",
             failures)
+    profile_success = extract_braced_block(share, "if let newImg = image")
+    require(profile_success is not None,
+            "Share screen must retain a successful profile image callback",
+            failures)
+    if profile_success is not None:
+        image_assignment = "self.profilePic!.image = circle"
+        reveal = "self.profilePic.hidden = false"
+        require(image_assignment in profile_success and reveal in profile_success and
+                profile_success.find(image_assignment) < profile_success.find(reveal),
+                "Successful profile image callbacks must assign the image before revealing it",
+                failures)
+    require(share.count("self.profilePic.hidden = true") == 1 and
+            share.count("self.profilePic.hidden = false") == 1,
+            "Profile image visibility must stay hidden initially and reveal only on success",
+            failures)
     require("if let statuses = jsonDictionary[\"statuses\"] as? JSONArray" in twitter_rest,
             "Twitter search parsing must safely unwrap statuses arrays",
             failures)
@@ -304,6 +321,7 @@ def main():
     tweep_picture_plan = TWEEP_PICTURE_PLAN.read_text(encoding="utf-8") if TWEEP_PICTURE_PLAN.exists() else ""
     https_profile_image_plan = HTTPS_PROFILE_IMAGE_PLAN.read_text(encoding="utf-8") if HTTPS_PROFILE_IMAGE_PLAN.exists() else ""
     media_upload_plan = MEDIA_UPLOAD_PLAN.read_text(encoding="utf-8") if MEDIA_UPLOAD_PLAN.exists() else ""
+    profile_visibility_plan = PROFILE_VISIBILITY_PLAN.read_text(encoding="utf-8") if PROFILE_VISIBILITY_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     require(".PHONY: build check lint test" in makefile and "lint test build: check" in makefile,
             "Makefile must expose lint, test, and build aliases for the local baseline",
@@ -413,6 +431,12 @@ def main():
             "profile_image_url_https" in changes,
             "Docs must preserve the dynamic HTTPS profile-image response boundary",
             failures)
+    require("revealed only after a successful profile image download" in readme.lower() and
+            "success-only profile image reveal" in security.lower() and
+            "successful profile images become visible" in vision.lower() and
+            "Reveal the profile image only after" in changes,
+            "Docs must record success-only profile image visibility",
+            failures)
     require("optional identifier" in readme and "status submission requires a non-nil media identifier" in readme and
             "nil identifier" in security and "request or connection objects" in security and
             "media-upload completion total" in vision and "status submission only after upload success" in vision and
@@ -437,6 +461,32 @@ def main():
             and all(item in media_upload_verification for item in media_upload_required_evidence)
             and re.search(r"\b(?:pending|todo|tbd|not run)\b", media_upload_verification, re.IGNORECASE) is None,
             "media upload completion plan must record completed status and actual verification",
+            failures)
+    profile_visibility_statuses = re.findall(
+        r"^status: .+$", profile_visibility_plan, flags=re.MULTILINE
+    )
+    profile_visibility_sections = profile_visibility_plan.split(
+        "## Verification Completed\n", 1
+    )
+    profile_visibility_verification = (
+        profile_visibility_sections[1]
+        if len(profile_visibility_sections) == 2 else ""
+    )
+    profile_visibility_required_evidence = (
+        "All four Make gates",
+        "`xcodebuild` was",
+        "python3 -m py_compile scripts/check-baseline.py",
+        "git diff --check",
+        "Six isolated hostile mutations",
+        "Hosted macOS project validation and CodeQL evidence",
+    )
+    require(profile_visibility_statuses == ["status: completed"]
+            and all(item in profile_visibility_verification
+                    for item in profile_visibility_required_evidence)
+            and re.search(r"\b(?:pending|todo|tbd|not run)\b",
+                          profile_visibility_verification,
+                          re.IGNORECASE) is None,
+            "profile image visibility plan must record completed status and actual local verification",
             failures)
     require("permissions:\n  contents: read" in workflow,
             "Check workflow must use read-only repository permissions",

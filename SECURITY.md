@@ -58,6 +58,8 @@ request or connection objects, and status submission should require a non-nil
 uploaded media identifier.
 Profile-image metadata must use Twitter's `profile_image_url_https` field; the
 legacy `profile_image_url` response can downgrade dynamic downloads to HTTP.
+A success-only profile image reveal keeps failed or incomplete account-image
+responses from exposing stale presentation state.
 
 ## Dependency and Supply Chain Security
 

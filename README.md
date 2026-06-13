@@ -87,6 +87,8 @@ response, JSON, and missing-ID failures. Upload request and connection objects
 are not logged, and status submission requires a non-nil media identifier.
 It reads Twitter's `profile_image_url_https` field so dynamic response URLs
 cannot downgrade profile image downloads to cleartext HTTP.
+The avatar remains hidden during lookup and is revealed only after a successful profile image download
+and image assignment.
 
 The pinned GitHub Actions check runs `make check` on `macos-15`. When Xcode is
 available, the baseline also runs `xcodebuild -list -project HomeScreen.xcodeproj`
