@@ -30,6 +30,8 @@ Priority:
   state instead of crashing or hanging
 - Keep profile-image lookup completion total across request and response
   failures so presentation setup does not hang
+- Keep media-upload completion total with an optional identifier, no transport
+  error logging, and status submission only after upload success
 - Keep profile image transport on Twitter's `profile_image_url_https` response
   field instead of the legacy cleartext-capable key
 - Keep pinned macOS CI parsing `HomeScreen.xcodeproj` through the canonical
@@ -67,7 +69,8 @@ photo-library permission describes screenshot sharing, uploads require a loaded
 image, Photos screenshot callbacks and screenshot fallback behavior are
 nil-safe, Twitter JSON, profile image, and write response data handling are
 nil-safe, share-screen Twitter session access is guarded, raw upload responses
-are not logged, deprecated update_with_media helper code stays removed, and the
+are not logged, media-upload failures return an optional identifier without
+logging transport objects, deprecated update_with_media helper code stays removed, and the
 legacy project/framework inventory remains visible. JPEG media data creation
 must use a valid compression quality and be guarded before upload.
 Tweet feed failures must complete safely and clear loading state when Twitter

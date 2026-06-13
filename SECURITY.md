@@ -53,6 +53,9 @@ Tweet feed failures should complete without forcing optional error values or
 leaving the feed in a loading state after Twitter search or guest-login errors.
 Profile-image requests should complete explicitly on malformed or failed
 responses rather than leaving account-adjacent presentation state unresolved.
+Media upload failures should complete with a nil identifier instead of logging
+request or connection objects, and status submission should require a non-nil
+uploaded media identifier.
 Profile-image metadata must use Twitter's `profile_image_url_https` field; the
 legacy `profile_image_url` response can downgrade dynamic downloads to HTTP.
 

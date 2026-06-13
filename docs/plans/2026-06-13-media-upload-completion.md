@@ -1,6 +1,6 @@
 # Media Upload Completion
 
-status: planned
+status: completed
 
 ## Context
 
@@ -69,3 +69,22 @@ request or connection details.
 - Hostile mutations removing optional completion, success return, each failure
   class, caller guarding, completed status, or verification evidence must be
   rejected.
+
+## Work Completed
+
+- Changed `UploadMedia` to complete with an optional media identifier.
+- Added explicit nil completion for handled callback failures and request
+  construction failure while preserving the successful media ID path.
+- Removed upload request and connection error logging.
+- Guarded status submission on a non-nil uploaded media identifier.
+- Updated static contracts and privacy, vision, README, and change docs.
+
+## Verification Completed
+
+- All four Make gates passed locally and reported that `xcodebuild` was
+  unavailable, so only the static iOS sharing baseline ran on this host.
+- `python3 -m py_compile scripts/check-baseline.py` and `git diff --check`
+  passed.
+- Eight isolated hostile mutations were rejected: optional-signature removal,
+  success-return removal, callback and request failure removal, raw error
+  logging, caller-guard removal, stale plan status, and missing evidence.

@@ -1,5 +1,11 @@
 # Changes
 
+## 2026-06-13
+
+- Made media upload completion return an optional identifier across request,
+  transport, response, JSON, and missing-ID failures; removed upload transport
+  error logging and guarded status submission on successful media ID extraction.
+
 ## 2026-06-12
 
 - Switched profile-image lookup to Twitter's `profile_image_url_https` response

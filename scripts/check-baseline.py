@@ -21,6 +21,7 @@ MODERNIZATION_PLAN = ROOT / "docs/plans/2026-06-10-legacy-sdk-modernization-boun
 HOSTED_VALIDATION_PLAN = ROOT / "docs/plans/2026-06-10-hosted-project-validation.md"
 TWEEP_PICTURE_PLAN = ROOT / "docs/plans/2026-06-10-profile-image-completion.md"
 HTTPS_PROFILE_IMAGE_PLAN = ROOT / "docs/plans/2026-06-12-https-profile-image-url.md"
+MEDIA_UPLOAD_PLAN = ROOT / "docs/plans/2026-06-13-media-upload-completion.md"
 
 
 def require(condition, message, failures):
@@ -54,6 +55,24 @@ def first_party_swift():
         path.read_text(encoding="utf-8", errors="replace")
         for path in sorted((ROOT / "HomeScreen").glob("*.swift"))
     )
+
+
+def extract_braced_block(source, marker):
+    marker_start = source.find(marker)
+    if marker_start < 0:
+        return None
+    brace_start = source.find("{", marker_start)
+    if brace_start < 0:
+        return None
+    depth = 0
+    for index in range(brace_start, len(source)):
+        if source[index] == "{":
+            depth += 1
+        elif source[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return source[marker_start:index + 1]
+    return None
 
 
 def main():
@@ -102,6 +121,7 @@ def main():
         "docs/plans/2026-06-10-hosted-project-validation.md",
         "docs/plans/2026-06-10-profile-image-completion.md",
         "docs/plans/2026-06-12-https-profile-image-url.md",
+        "docs/plans/2026-06-13-media-upload-completion.md",
     ]
 
     for relative_path in required_files:
@@ -215,6 +235,27 @@ def main():
     require("if let media_id_string = jsonDictionary[\"media_id_string\"] as?String" in upload,
             "Twitter media upload parsing must safely unwrap media IDs",
             failures)
+    upload_media = extract_braced_block(upload, "func UploadMedia(")
+    share_post = extract_braced_block(share, "func post()")
+    require(upload_media is not None and share_post is not None,
+            "Media upload and share post functions must remain inspectable",
+            failures)
+    if upload_media is not None and share_post is not None:
+        require("completion: (result: String?) -> Void" in upload_media and
+                upload_media.count("completion(result: nil)") == 2 and
+                upload_media.count("completion(result: media_id_string)") == 1 and
+                "return" in upload_media,
+                "UploadMedia must complete once with an optional media identifier on every handled path",
+                failures)
+        require("println(" not in upload_media,
+                "UploadMedia must not log request or connection error details",
+                failures)
+        require("(media_id: String?)" in share_post and
+                "if let uploadedMediaID = media_id" in share_post and
+                "UpdateStatus(text, uploadedMediaID)" in share_post and
+                "UpdateStatus(text, media_id)" not in share_post,
+                "ShareController must submit status only after a successful media upload",
+                failures)
     require("UIImage(data: data)!" not in swift and "handler: ((image: UIImage?" in url_helper,
             "Image downloads must return optional images instead of force-unwrapping data",
             failures)
@@ -262,6 +303,7 @@ def main():
     hosted_validation_plan = HOSTED_VALIDATION_PLAN.read_text(encoding="utf-8") if HOSTED_VALIDATION_PLAN.exists() else ""
     tweep_picture_plan = TWEEP_PICTURE_PLAN.read_text(encoding="utf-8") if TWEEP_PICTURE_PLAN.exists() else ""
     https_profile_image_plan = HTTPS_PROFILE_IMAGE_PLAN.read_text(encoding="utf-8") if HTTPS_PROFILE_IMAGE_PLAN.exists() else ""
+    media_upload_plan = MEDIA_UPLOAD_PLAN.read_text(encoding="utf-8") if MEDIA_UPLOAD_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     require(".PHONY: build check lint test" in makefile and "lint test build: check" in makefile,
             "Makefile must expose lint, test, and build aliases for the local baseline",
@@ -370,6 +412,31 @@ def main():
             "profile_image_url_https" in security and
             "profile_image_url_https" in changes,
             "Docs must preserve the dynamic HTTPS profile-image response boundary",
+            failures)
+    require("optional identifier" in readme and "status submission requires a non-nil media identifier" in readme and
+            "nil identifier" in security and "request or connection objects" in security and
+            "media-upload completion total" in vision and "status submission only after upload success" in vision and
+            "media upload completion return an optional identifier" in changes and "guarded status submission" in changes,
+            "Docs must record deterministic media-upload completion",
+            failures)
+    media_upload_statuses = re.findall(
+        r"^status: .+$", media_upload_plan, flags=re.MULTILINE
+    )
+    media_upload_sections = media_upload_plan.split("## Verification Completed\n", 1)
+    media_upload_verification = (
+        media_upload_sections[1] if len(media_upload_sections) == 2 else ""
+    )
+    media_upload_required_evidence = (
+        "All four Make gates",
+        "`xcodebuild` was",
+        "python3 -m py_compile scripts/check-baseline.py",
+        "git diff --check",
+        "Eight isolated hostile mutations",
+    )
+    require(media_upload_statuses == ["status: completed"]
+            and all(item in media_upload_verification for item in media_upload_required_evidence)
+            and re.search(r"\b(?:pending|todo|tbd|not run)\b", media_upload_verification, re.IGNORECASE) is None,
+            "media upload completion plan must record completed status and actual verification",
             failures)
     require("permissions:\n  contents: read" in workflow,
             "Check workflow must use read-only repository permissions",

@@ -100,8 +100,10 @@ class ShareController: UIViewController{
         if let image = self.screenImage.image {
             if let media = UIImageJPEGRepresentation(image, 1.0) {
                 // Upload the data to uploads.twitter.com and then use the media_id to update status
-                UploadMedia(media) { (media_id: String) in
-                    UpdateStatus(text, media_id)
+                UploadMedia(media) { (media_id: String?) in
+                    if let uploadedMediaID = media_id {
+                        UpdateStatus(text, uploadedMediaID)
+                    }
                 }
             }
         }

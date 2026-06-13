@@ -82,6 +82,9 @@ the loading indicator is cleared without force-casting returned tweet objects.
 Profile-image lookup now completes with an optional result on request,
 transport, JSON, and missing-field failures so share-screen setup cannot wait
 indefinitely for a callback.
+Media upload now completes with an optional identifier on request, transport,
+response, JSON, and missing-ID failures. Upload request and connection objects
+are not logged, and status submission requires a non-nil media identifier.
 It reads Twitter's `profile_image_url_https` field so dynamic response URLs
 cannot downgrade profile image downloads to cleartext HTTP.
 
