@@ -23,6 +23,7 @@ TWEEP_PICTURE_PLAN = ROOT / "docs/plans/2026-06-10-profile-image-completion.md"
 HTTPS_PROFILE_IMAGE_PLAN = ROOT / "docs/plans/2026-06-12-https-profile-image-url.md"
 MEDIA_UPLOAD_PLAN = ROOT / "docs/plans/2026-06-13-media-upload-completion.md"
 PROFILE_VISIBILITY_PLAN = ROOT / "docs/plans/2026-06-13-profile-image-success-visibility.md"
+LOCATION_INDEPENDENT_MAKE_PLAN = ROOT / "docs/plans/2026-06-13-location-independent-make.md"
 
 
 def require(condition, message, failures):
@@ -124,6 +125,7 @@ def main():
         "docs/plans/2026-06-12-https-profile-image-url.md",
         "docs/plans/2026-06-13-media-upload-completion.md",
         "docs/plans/2026-06-13-profile-image-success-visibility.md",
+        "docs/plans/2026-06-13-location-independent-make.md",
     ]
 
     for relative_path in required_files:
@@ -322,10 +324,17 @@ def main():
     https_profile_image_plan = HTTPS_PROFILE_IMAGE_PLAN.read_text(encoding="utf-8") if HTTPS_PROFILE_IMAGE_PLAN.exists() else ""
     media_upload_plan = MEDIA_UPLOAD_PLAN.read_text(encoding="utf-8") if MEDIA_UPLOAD_PLAN.exists() else ""
     profile_visibility_plan = PROFILE_VISIBILITY_PLAN.read_text(encoding="utf-8") if PROFILE_VISIBILITY_PLAN.exists() else ""
+    location_independent_make_plan = LOCATION_INDEPENDENT_MAKE_PLAN.read_text(encoding="utf-8") if LOCATION_INDEPENDENT_MAKE_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     require(".PHONY: build check lint test" in makefile and "lint test build: check" in makefile,
             "Makefile must expose lint, test, and build aliases for the local baseline",
             failures)
+    require("ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))" in makefile and '@python3 "$(ROOT)/scripts/check-baseline.py"' in makefile,
+            "Makefile must invoke the checker through the loaded checkout root", failures)
+    require("absolute Makefile path" in readme and "any working directory" in readme,
+            "README must document location-independent verification", failures)
+    require("Make verification target derive the checkout root" in changes and "external directories" in changes,
+            "CHANGES must record location-independent verification", failures)
     require("make lint" in readme and "make test" in readme and "make build" in readme and "make check" in readme and "FABRIC_API_KEY" in readme and "NSPhotoLibraryUsageDescription" in readme and "nil-safe" in readme and "screenshot fallback" in readme and "write response" in readme and "Twitter session" in readme and "JPEG media data" in readme and "tweet feed failures" in readme,
             "README must document static verification, Fabric credentials, and photo permission configuration",
             failures)
@@ -488,6 +497,12 @@ def main():
                           re.IGNORECASE) is None,
             "profile image visibility plan must record completed status and actual local verification",
             failures)
+    location_statuses = re.findall(r"^status: .+$", location_independent_make_plan, flags=re.MULTILINE)
+    location_sections = location_independent_make_plan.split("## Verification Completed\n", 1)
+    location_verification = location_sections[1] if len(location_sections) == 2 else ""
+    location_required = ("Root and external-directory Make gates passed", "root-derivation mutation failed", "checker-invocation mutation failed", "plan-status mutation failed", "plan-evidence mutation failed", "documentation mutation failed")
+    require(location_statuses == ["status: completed"] and all(item in location_verification for item in location_required) and re.search(r"\b(?:pending|todo|tbd|not run)\b", location_verification, re.IGNORECASE) is None,
+            "location-independent Make plan must record completed verification", failures)
     require("permissions:\n  contents: read" in workflow,
             "Check workflow must use read-only repository permissions",
             failures)

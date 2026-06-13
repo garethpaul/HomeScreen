@@ -2,6 +2,8 @@
 
 ## 2026-06-13
 
+- Made every Make verification target derive the checkout root so the static
+  baseline works from external directories.
 - Reveal the profile image only after a successful download and transformed
   image assignment; failed lookup paths retain the initial hidden state.
 - Made media upload completion return an optional identifier across request,

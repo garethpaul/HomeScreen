@@ -122,6 +122,9 @@ When the required SDK or runtime is unavailable, use static checks and source re
 
 ## Maintenance Notes
 
+- Every Make verification target derives the checkout root from the loaded
+  Makefile, so an absolute Makefile path works from any working directory.
+
 This is an archival Swift 1-era baseline with an iOS 8.1 deployment target and
 vendored Fabric, Crashlytics, and TwitterKit binaries. Those services and SDKs
 are retired, so the project is not expected to build unchanged with a current
