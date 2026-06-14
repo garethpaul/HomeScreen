@@ -1,5 +1,8 @@
 # Changes
 
+- Moved share-composer dismissal behind validated Twitter status creation so
+  failed uploads and posts no longer appear successful.
+
 ## 2026-06-13
 
 - Made every Make verification target derive the checkout root so the static

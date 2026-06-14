@@ -102,14 +102,17 @@ class ShareController: UIViewController{
                 // Upload the data to uploads.twitter.com and then use the media_id to update status
                 UploadMedia(media) { (media_id: String?) in
                     if let uploadedMediaID = media_id {
-                        UpdateStatus(text, uploadedMediaID)
+                        UpdateStatus(text, uploadedMediaID) { (succeeded: Bool) in
+                            if succeeded {
+                                NSOperationQueue.mainQueue().addOperationWithBlock {
+                                    self.performSegueWithIdentifier("cancelSegue", sender: self)
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
-
-        // Send the user back to the initial "main" screen
-        self.performSegueWithIdentifier("cancelSegue", sender: self)
 
     }
 

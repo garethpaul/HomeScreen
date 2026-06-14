@@ -24,6 +24,7 @@ HTTPS_PROFILE_IMAGE_PLAN = ROOT / "docs/plans/2026-06-12-https-profile-image-url
 MEDIA_UPLOAD_PLAN = ROOT / "docs/plans/2026-06-13-media-upload-completion.md"
 PROFILE_VISIBILITY_PLAN = ROOT / "docs/plans/2026-06-13-profile-image-success-visibility.md"
 LOCATION_INDEPENDENT_MAKE_PLAN = ROOT / "docs/plans/2026-06-13-location-independent-make.md"
+STATUS_DISMISSAL_PLAN = ROOT / "docs/plans/2026-06-14-successful-status-dismissal.md"
 
 
 def require(condition, message, failures):
@@ -100,6 +101,7 @@ def main():
         "HomeScreen/ShareController.swift",
         "HomeScreen/Upload.swift",
         "HomeScreen/UploadMedia.swift",
+        "HomeScreen/UpdateStatus.swift",
         "HomeScreen/Hex.swift",
         "HomeScreen/TwitterRESTAPI.swift",
         "HomeScreen/TweepPicture.swift",
@@ -126,6 +128,7 @@ def main():
         "docs/plans/2026-06-13-media-upload-completion.md",
         "docs/plans/2026-06-13-profile-image-success-visibility.md",
         "docs/plans/2026-06-13-location-independent-make.md",
+        "docs/plans/2026-06-14-successful-status-dismissal.md",
     ]
 
     for relative_path in required_files:
@@ -174,6 +177,7 @@ def main():
     view_controller = read("HomeScreen/ViewController.swift")
     post = read("HomeScreen/Post.swift")
     active_upload = read("HomeScreen/Upload.swift")
+    update_status = read("HomeScreen/UpdateStatus.swift")
     legacy_upload = read("HomeScreen/UploadMedia.swift")
     upload = active_upload + legacy_upload
     tweep_picture = read("HomeScreen/TweepPicture.swift")
@@ -255,11 +259,12 @@ def main():
             "Twitter media upload parsing must safely unwrap media IDs",
             failures)
     upload_media = extract_braced_block(upload, "func UploadMedia(")
+    status_update = extract_braced_block(update_status, "func UpdateStatus(")
     share_post = extract_braced_block(share, "func post()")
-    require(upload_media is not None and share_post is not None,
-            "Media upload and share post functions must remain inspectable",
+    require(upload_media is not None and status_update is not None and share_post is not None,
+            "Media upload, status update, and share post functions must remain inspectable",
             failures)
-    if upload_media is not None and share_post is not None:
+    if upload_media is not None and status_update is not None and share_post is not None:
         require("completion: (result: String?) -> Void" in upload_media and
                 upload_media.count("completion(result: nil)") == 2 and
                 upload_media.count("completion(result: media_id_string)") == 1 and
@@ -274,6 +279,24 @@ def main():
                 "UpdateStatus(text, uploadedMediaID)" in share_post and
                 "UpdateStatus(text, media_id)" not in share_post,
                 "ShareController must submit status only after a successful media upload",
+                failures)
+        require("completion: (succeeded: Bool) -> Void" in status_update and
+                status_update.count("completion(succeeded: false)") == 2 and
+                status_update.count("completion(succeeded: true)") == 1 and
+                'jsonDictionary["id_str"] as? String' in status_update and
+                "whitespaceAndNewlineCharacterSet" in status_update and
+                "!trimmedStatusID.isEmpty" in status_update and
+                "println(" not in status_update,
+                "UpdateStatus must complete once and accept only a nonblank status identifier",
+                failures)
+        status_call = extract_braced_block(share_post, "UpdateStatus(text, uploadedMediaID)")
+        require(status_call is not None and "if succeeded" in status_call and
+                "NSOperationQueue.mainQueue().addOperationWithBlock" in status_call and
+                'self.performSegueWithIdentifier("cancelSegue", sender: self)' in status_call,
+                "ShareController must dismiss on the main queue only after status success",
+                failures)
+        require(share_post.count('performSegueWithIdentifier("cancelSegue", sender: self)') == 1,
+                "ShareController post must not dismiss before status success",
                 failures)
     require("UIImage(data: data)!" not in swift and "handler: ((image: UIImage?" in url_helper,
             "Image downloads must return optional images instead of force-unwrapping data",
@@ -325,6 +348,7 @@ def main():
     media_upload_plan = MEDIA_UPLOAD_PLAN.read_text(encoding="utf-8") if MEDIA_UPLOAD_PLAN.exists() else ""
     profile_visibility_plan = PROFILE_VISIBILITY_PLAN.read_text(encoding="utf-8") if PROFILE_VISIBILITY_PLAN.exists() else ""
     location_independent_make_plan = LOCATION_INDEPENDENT_MAKE_PLAN.read_text(encoding="utf-8") if LOCATION_INDEPENDENT_MAKE_PLAN.exists() else ""
+    status_dismissal_plan = STATUS_DISMISSAL_PLAN.read_text(encoding="utf-8") if STATUS_DISMISSAL_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     require(".PHONY: build check lint test" in makefile and "lint test build: check" in makefile,
             "Makefile must expose lint, test, and build aliases for the local baseline",
@@ -452,6 +476,13 @@ def main():
             "media upload completion return an optional identifier" in changes and "guarded status submission" in changes,
             "Docs must record deterministic media-upload completion",
             failures)
+    require("dismisses only after Twitter confirms status creation" in readme and
+            "success-only share dismissal" in security and
+            "Keep share dismissal behind confirmed status creation" in vision and
+            "Moved share-composer dismissal behind" in changes and
+            "Keep share-composer dismissal behind" in read("AGENTS.md"),
+            "Docs must record success-only status dismissal",
+            failures)
     media_upload_statuses = re.findall(
         r"^status: .+$", media_upload_plan, flags=re.MULTILINE
     )
@@ -503,6 +534,20 @@ def main():
     location_required = ("Root and external-directory Make gates passed", "root-derivation mutation failed", "checker-invocation mutation failed", "plan-status mutation failed", "plan-evidence mutation failed", "documentation mutation failed")
     require(location_statuses == ["status: completed"] and all(item in location_verification for item in location_required) and re.search(r"\b(?:pending|todo|tbd|not run)\b", location_verification, re.IGNORECASE) is None,
             "location-independent Make plan must record completed verification", failures)
+    status_dismissal_statuses = re.findall(r"^status: .+$", status_dismissal_plan, flags=re.MULTILINE)
+    status_dismissal_sections = status_dismissal_plan.split("## Verification Completed\n", 1)
+    status_dismissal_verification = status_dismissal_sections[1] if len(status_dismissal_sections) == 2 else ""
+    status_dismissal_required = (
+        "All four Make gates passed",
+        "absolute Makefile path passed from `/tmp`",
+        "python3 -m py_compile scripts/check-baseline.py",
+        "isolated hostile mutations were rejected",
+        "changed-line credential scan passed",
+    )
+    require(status_dismissal_statuses == ["status: completed"] and
+            all(item in status_dismissal_verification for item in status_dismissal_required) and
+            re.search(r"\b(?:pending|todo|tbd|not run)\b", status_dismissal_verification, re.IGNORECASE) is None,
+            "successful status dismissal plan must record completed verification", failures)
     require("permissions:\n  contents: read" in workflow,
             "Check workflow must use read-only repository permissions",
             failures)

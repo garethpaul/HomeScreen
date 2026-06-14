@@ -8,7 +8,8 @@
 import Foundation
 import TwitterKit
 
-func UpdateStatus(status: String, mediaId: String) {
+func UpdateStatus(status: String, mediaId: String,
+    completion: (succeeded: Bool) -> Void) {
 
     // setup some type aliases to handle regular wording for JSON type objects
     typealias JSON = AnyObject
@@ -28,9 +29,6 @@ func UpdateStatus(status: String, mediaId: String) {
     // get the TwitterAPI client
     var twAPIClient = Twitter.sharedInstance().APIClient
 
-    // setup params
-    var parameters:Dictionary = Dictionary<String, String>()
-
     // ready the post request for magic
     var twUploadRequest = twAPIClient.URLRequestWithMethod("POST", URL: RESTAPIEndpoint, parameters: params, error: &clientError)
 
@@ -48,17 +46,22 @@ func UpdateStatus(status: String, mediaId: String) {
                     NSJSONSerialization.JSONObjectWithData(responseData,
                         options: nil,
                         error: &jsonError)
+                    if let jsonDictionary = json as? JSONDictionary {
+                        if let statusID = jsonDictionary["id_str"] as? String {
+                            let trimmedStatusID = statusID.stringByTrimmingCharactersInSet(
+                                NSCharacterSet.whitespaceAndNewlineCharacterSet())
+                            if !trimmedStatusID.isEmpty {
+                                completion(succeeded: true)
+                                return
+                            }
+                        }
+                    }
                 }
-
-                // TODO: do something e.g. return a true value if the tweet has been successfully created :-) could also render a tweet ...                
-
-            } else {
-                println("error \(connectionError)")
             }
+            completion(succeeded: false)
         }
     } else {
-        println("error \(clientError)")
+        completion(succeeded: false)
     }
 }
-
 

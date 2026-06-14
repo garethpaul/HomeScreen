@@ -1,6 +1,6 @@
 # Dismiss Share Composer After Status Success
 
-status: planned
+status: completed
 
 ## Context
 
@@ -58,11 +58,16 @@ malformed-response failure looks like a successful share.
 - Do not edit vendored frameworks, project metadata, lockfiles, or workflow
   configuration.
 
-## Verification Plan
+## Verification Completed
 
-- Run focused static contracts, Python checker compilation, all four Make gates,
-  and the absolute Makefile gate from `/tmp`.
-- Reject mutations that remove status failure completion, response-ID
-  validation, success nesting, main-queue dispatch, or plan evidence.
-- Run diff, artifact, vendored-path, and changed-line credential audits before
-  committing.
+- All four Make gates passed and explicitly reported that `xcodebuild` was
+  unavailable, so local validation was limited to the maintained static iOS
+  sharing baseline.
+- The absolute Makefile path passed from `/tmp`.
+- `python3 -m py_compile scripts/check-baseline.py` passed.
+- Eight isolated hostile mutations were rejected: completion-signature
+  weakening, failure-completion removal, status-ID validation removal, blank-ID
+  acceptance, success-nesting removal, main-queue removal, stale plan status,
+  and missing plan evidence.
+- `git diff --check`, exact intended-path review, generated-artifact inspection,
+  and vendored/project/lockfile exclusion passed. The changed-line credential scan passed.
