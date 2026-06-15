@@ -58,6 +58,7 @@ request or connection objects, and status submission should require a non-nil
 uploaded media identifier.
 Preserve success-only share dismissal so transport or malformed-response
 failures cannot appear to the user as a completed post.
+Share post callbacks are generation-bound so duplicate taps and stale completions cannot dismiss the composer.
 Profile-image metadata must use Twitter's `profile_image_url_https` field; the
 legacy `profile_image_url` response can downgrade dynamic downloads to HTTP.
 A success-only profile image reveal keeps failed or incomplete account-image

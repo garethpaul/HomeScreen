@@ -25,6 +25,7 @@ MEDIA_UPLOAD_PLAN = ROOT / "docs/plans/2026-06-13-media-upload-completion.md"
 PROFILE_VISIBILITY_PLAN = ROOT / "docs/plans/2026-06-13-profile-image-success-visibility.md"
 LOCATION_INDEPENDENT_MAKE_PLAN = ROOT / "docs/plans/2026-06-13-location-independent-make.md"
 STATUS_DISMISSAL_PLAN = ROOT / "docs/plans/2026-06-14-successful-status-dismissal.md"
+POST_GENERATION_PLAN = ROOT / "docs/plans/2026-06-15-share-post-generation.md"
 
 
 def require(condition, message, failures):
@@ -129,6 +130,7 @@ def main():
         "docs/plans/2026-06-13-profile-image-success-visibility.md",
         "docs/plans/2026-06-13-location-independent-make.md",
         "docs/plans/2026-06-14-successful-status-dismissal.md",
+        "docs/plans/2026-06-15-share-post-generation.md",
     ]
 
     for relative_path in required_files:
@@ -290,13 +292,45 @@ def main():
                 "UpdateStatus must complete once and accept only a nonblank status identifier",
                 failures)
         status_call = extract_braced_block(share_post, "UpdateStatus(text, uploadedMediaID)")
-        require(status_call is not None and "if succeeded" in status_call and
-                "NSOperationQueue.mainQueue().addOperationWithBlock" in status_call and
-                'self.performSegueWithIdentifier("cancelSegue", sender: self)' in status_call,
-                "ShareController must dismiss on the main queue only after status success",
+        require(status_call is not None and
+                "self.completePost(generation, succeeded: succeeded)" in status_call,
+                "ShareController must route status completion through generation ownership",
                 failures)
-        require(share_post.count('performSegueWithIdentifier("cancelSegue", sender: self)') == 1,
+        require(share_post.count('performSegueWithIdentifier("cancelSegue", sender: self)') == 0,
                 "ShareController post must not dismiss before status success",
+                failures)
+        require("if self.postInFlight" in share_post and
+                "self.postInFlight = true" in share_post and
+                "let generation = self.postGeneration" in share_post,
+                "ShareController must suppress duplicate posts and capture submission ownership",
+                failures)
+        require("self.completePost(generation, succeeded: succeeded)" in share_post and
+                "self.completePost(generation, succeeded: false)" in share_post,
+                "ShareController must resolve status and media failure through one generation-bound completion",
+                failures)
+    complete_post = extract_braced_block(share, "func completePost(")
+    invalidate_post = extract_braced_block(share, "func invalidatePost()")
+    view_disappear = extract_braced_block(share, "override func viewWillDisappear(")
+    close_action = extract_braced_block(share, "func close()")
+    require(complete_post is not None and invalidate_post is not None and
+            view_disappear is not None and close_action is not None,
+            "Share post completion and invalidation functions must remain inspectable",
+            failures)
+    if complete_post is not None:
+        require("NSOperationQueue.mainQueue().addOperationWithBlock" in complete_post and
+                "!self.postInFlight || self.postGeneration != generation" in complete_post and
+                "self.postInFlight = false" in complete_post and
+                "if succeeded" in complete_post and
+                'self.performSegueWithIdentifier("cancelSegue", sender: self)' in complete_post,
+                "Share completion must reject stale generations and dismiss successful current posts on the main queue",
+                failures)
+    if invalidate_post is not None and view_disappear is not None and close_action is not None:
+        require("postGeneration += 1" in invalidate_post and
+                "postInFlight = false" in invalidate_post and
+                "invalidatePost()" in view_disappear and
+                "invalidatePost()" in close_action and
+                close_action.find("invalidatePost()") < close_action.find('performSegueWithIdentifier("cancelSegue"'),
+                "Share controller close and disappearance must invalidate active post callbacks before dismissal",
                 failures)
     require("UIImage(data: data)!" not in swift and "handler: ((image: UIImage?" in url_helper,
             "Image downloads must return optional images instead of force-unwrapping data",
@@ -349,6 +383,7 @@ def main():
     profile_visibility_plan = PROFILE_VISIBILITY_PLAN.read_text(encoding="utf-8") if PROFILE_VISIBILITY_PLAN.exists() else ""
     location_independent_make_plan = LOCATION_INDEPENDENT_MAKE_PLAN.read_text(encoding="utf-8") if LOCATION_INDEPENDENT_MAKE_PLAN.exists() else ""
     status_dismissal_plan = STATUS_DISMISSAL_PLAN.read_text(encoding="utf-8") if STATUS_DISMISSAL_PLAN.exists() else ""
+    post_generation_plan = POST_GENERATION_PLAN.read_text(encoding="utf-8") if POST_GENERATION_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     require(".PHONY: build check lint test" in makefile and "lint test build: check" in makefile,
             "Makefile must expose lint, test, and build aliases for the local baseline",
@@ -483,6 +518,11 @@ def main():
             "Keep share-composer dismissal behind" in read("AGENTS.md"),
             "Docs must record success-only status dismissal",
             failures)
+    post_generation_guidance = "Share post callbacks are generation-bound so duplicate taps and stale completions cannot dismiss the composer."
+    require(all(post_generation_guidance in read(path) for path in
+                ["AGENTS.md", "README.md", "SECURITY.md", "VISION.md", "CHANGES.md"]),
+            "Docs must record share post generation ownership",
+            failures)
     media_upload_statuses = re.findall(
         r"^status: .+$", media_upload_plan, flags=re.MULTILINE
     )
@@ -548,6 +588,21 @@ def main():
             all(item in status_dismissal_verification for item in status_dismissal_required) and
             re.search(r"\b(?:pending|todo|tbd|not run)\b", status_dismissal_verification, re.IGNORECASE) is None,
             "successful status dismissal plan must record completed verification", failures)
+    post_generation_statuses = re.findall(r"^status: .+$", post_generation_plan, flags=re.MULTILINE)
+    post_generation_sections = post_generation_plan.split("## Verification Completed\n", 1)
+    post_generation_verification = post_generation_sections[1] if len(post_generation_sections) == 2 else ""
+    post_generation_required = (
+        "All four Make gates passed",
+        "absolute Makefile passed from `/tmp`",
+        "python3 -m py_compile scripts/check-baseline.py",
+        "hostile mutations were rejected",
+        "changed-line credential scan passed",
+        "hosted pull-request and security-alert snapshot",
+    )
+    require(post_generation_statuses == ["status: completed"] and
+            all(item in post_generation_verification for item in post_generation_required) and
+            re.search(r"\b(?:pending|todo|tbd|not run)\b", post_generation_verification, re.IGNORECASE) is None,
+            "share post generation plan must record completed verification", failures)
     require("permissions:\n  contents: read" in workflow,
             "Check workflow must use read-only repository permissions",
             failures)

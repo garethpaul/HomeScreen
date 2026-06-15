@@ -22,6 +22,8 @@ class ShareController: UIViewController{
     var leftButton: UIImage!
     var leftView: UIImageView!
     var lBtn: UIBarButtonItem!
+    var postInFlight = false
+    var postGeneration = 0
 
     override func viewDidAppear(animated: Bool) {
         self.inputT.becomeFirstResponder()
@@ -86,6 +88,29 @@ class ShareController: UIViewController{
         }
     }
 
+    override func viewWillDisappear(animated: Bool) {
+        super.viewWillDisappear(animated)
+        invalidatePost()
+    }
+
+    func invalidatePost() {
+        postGeneration += 1
+        postInFlight = false
+    }
+
+    func completePost(generation: Int, succeeded: Bool) {
+        NSOperationQueue.mainQueue().addOperationWithBlock {
+            if !self.postInFlight || self.postGeneration != generation {
+                return
+            }
+
+            self.postInFlight = false
+            if succeeded {
+                self.performSegueWithIdentifier("cancelSegue", sender: self)
+            }
+        }
+    }
+
     // Send post request to Twitter to process image with media_id
     //
     func post() {
@@ -99,16 +124,21 @@ class ShareController: UIViewController{
         // Get the home screen NSData to upload
         if let image = self.screenImage.image {
             if let media = UIImageJPEGRepresentation(image, 1.0) {
+                if self.postInFlight {
+                    return
+                }
+                self.postInFlight = true
+                self.postGeneration += 1
+                let generation = self.postGeneration
+
                 // Upload the data to uploads.twitter.com and then use the media_id to update status
                 UploadMedia(media) { (media_id: String?) in
                     if let uploadedMediaID = media_id {
                         UpdateStatus(text, uploadedMediaID) { (succeeded: Bool) in
-                            if succeeded {
-                                NSOperationQueue.mainQueue().addOperationWithBlock {
-                                    self.performSegueWithIdentifier("cancelSegue", sender: self)
-                                }
-                            }
+                            self.completePost(generation, succeeded: succeeded)
                         }
+                    } else {
+                        self.completePost(generation, succeeded: false)
                     }
                 }
             }
@@ -120,6 +150,7 @@ class ShareController: UIViewController{
     //
     func close(){
         self.view.endEditing(true)
+        invalidatePost()
 
         // Send the user back to the initial "main" screen
         self.performSegueWithIdentifier("cancelSegue", sender: self)

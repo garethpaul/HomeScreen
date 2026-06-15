@@ -1,5 +1,6 @@
 # Changes
 
+- Share post callbacks are generation-bound so duplicate taps and stale completions cannot dismiss the composer.
 - Moved share-composer dismissal behind validated Twitter status creation so
   failed uploads and posts no longer appear successful.
 

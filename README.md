@@ -87,6 +87,7 @@ response, JSON, and missing-ID failures. Upload request and connection objects
 are not logged, and status submission requires a non-nil media identifier.
 The share composer dismisses only after Twitter confirms status creation;
 upload and status failures keep the composer visible.
+Share post callbacks are generation-bound so duplicate taps and stale completions cannot dismiss the composer.
 It reads Twitter's `profile_image_url_https` field so dynamic response URLs
 cannot downgrade profile image downloads to cleartext HTTP.
 The avatar remains hidden during lookup and is revealed only after a successful profile image download

@@ -1,6 +1,6 @@
 # Guard Share Post Generations
 
-status: planned
+status: completed
 
 ## Context
 
@@ -64,3 +64,27 @@ navigates away from the composer and attempt a second stale dismissal.
 - Push a stacked pull request and take one bounded exact-head hosted and
   security-alert snapshot without polling.
 
+## Work Completed
+
+- Added in-flight and generation ownership for accepted share submissions.
+- Routed media failure and status success/failure through one main-queue
+  completion helper that rejects stale generations.
+- Invalidated active callbacks before explicit close and whenever the share
+  controller disappears.
+- Added source, ordering, lifecycle, guidance, and plan contracts.
+
+## Verification Completed
+
+- All four Make gates passed and truthfully reported that `xcodebuild` was
+  unavailable, so no local iOS runtime claim is made.
+- The absolute Makefile passed from `/tmp`.
+- `python3 -m py_compile scripts/check-baseline.py` and `git diff --check`
+  passed.
+- Ten hostile mutations were rejected across duplicate suppression, in-flight
+  ownership, generation capture, media failure, main-queue completion, stale
+  rejection, close invalidation, disappearance invalidation, guidance, and plan
+  evidence.
+- Exact intended-path review, generated-artifact inspection, vendored/project/
+  lockfile exclusion, conflict-marker and whitespace audits, and the changed-line credential scan passed.
+- The hosted pull-request and security-alert snapshot is recorded separately
+  after push; this plan claims only completed pre-push verification above.
