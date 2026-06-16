@@ -53,6 +53,7 @@ Tweet feed failures should complete without forcing optional error values or
 leaving the feed in a loading state after Twitter search or guest-login errors.
 Profile-image requests should complete explicitly on malformed or failed
 responses rather than leaving account-adjacent presentation state unresolved.
+Profile image callbacks are generation-bound to the visible share screen.
 Media upload failures should complete with a nil identifier instead of logging
 request or connection objects, and status submission should require a non-nil
 uploaded media identifier.

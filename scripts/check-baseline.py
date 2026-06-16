@@ -26,6 +26,7 @@ PROFILE_VISIBILITY_PLAN = ROOT / "docs/plans/2026-06-13-profile-image-success-vi
 LOCATION_INDEPENDENT_MAKE_PLAN = ROOT / "docs/plans/2026-06-13-location-independent-make.md"
 STATUS_DISMISSAL_PLAN = ROOT / "docs/plans/2026-06-14-successful-status-dismissal.md"
 POST_GENERATION_PLAN = ROOT / "docs/plans/2026-06-15-share-post-generation.md"
+PROFILE_GENERATION_PLAN = ROOT / "docs/plans/2026-06-16-profile-image-generation.md"
 
 
 def require(condition, message, failures):
@@ -131,6 +132,7 @@ def main():
         "docs/plans/2026-06-13-location-independent-make.md",
         "docs/plans/2026-06-14-successful-status-dismissal.md",
         "docs/plans/2026-06-15-share-post-generation.md",
+        "docs/plans/2026-06-16-profile-image-generation.md",
     ]
 
     for relative_path in required_files:
@@ -244,16 +246,43 @@ def main():
             "Share screen must retain a successful profile image callback",
             failures)
     if profile_success is not None:
-        image_assignment = "self.profilePic!.image = circle"
-        reveal = "self.profilePic.hidden = false"
+        image_assignment = "controller.profilePic!.image = circle"
+        reveal = "controller.profilePic.hidden = false"
         require(image_assignment in profile_success and reveal in profile_success and
                 profile_success.find(image_assignment) < profile_success.find(reveal),
                 "Successful profile image callbacks must assign the image before revealing it",
                 failures)
     require(share.count("self.profilePic.hidden = true") == 1 and
-            share.count("self.profilePic.hidden = false") == 1,
+            share.count("controller.profilePic.hidden = false") == 1,
             "Profile image visibility must stay hidden initially and reveal only on success",
             failures)
+    profile_load = extract_braced_block(share, "func startProfileImageLoad(")
+    invalidate_profile = extract_braced_block(share, "func invalidateProfileImageLoad()")
+    require(profile_load is not None and invalidate_profile is not None,
+            "Profile image generation helpers must remain inspectable",
+            failures)
+    if profile_load is not None:
+        profile_url_callback = extract_braced_block(profile_load, "TweepPicture(userName)")
+        profile_download_callback = extract_braced_block(profile_load, "url.downloadImage(profileURL")
+        require("profileGeneration += 1" in profile_load and
+                "let generation = profileGeneration" in profile_load and
+                "TweepPicture(userName){ [weak self]" in profile_load and
+                "addOperationWithBlock { [weak self] in" in profile_load and
+                "url.downloadImage(profileURL, { [weak self]" in profile_load,
+                "Profile image loading must use weak ownership at every asynchronous boundary",
+                failures)
+        require(profile_url_callback is not None and
+                "if controller.profileGeneration != generation" in profile_url_callback and
+                profile_url_callback.find("if controller.profileGeneration != generation") <
+                profile_url_callback.find("url.downloadImage(profileURL"),
+                "Stale profile URL callbacks must stop before image download",
+                failures)
+        require(profile_download_callback is not None and
+                "if controller.profileGeneration != generation" in profile_download_callback and
+                profile_download_callback.find("if controller.profileGeneration != generation") <
+                profile_download_callback.find("controller.profilePic!.image = circle"),
+                "Stale profile downloads must stop before avatar mutation",
+                failures)
     require("if let statuses = jsonDictionary[\"statuses\"] as? JSONArray" in twitter_rest,
             "Twitter search parsing must safely unwrap statuses arrays",
             failures)
@@ -332,6 +361,13 @@ def main():
                 close_action.find("invalidatePost()") < close_action.find('performSegueWithIdentifier("cancelSegue"'),
                 "Share controller close and disappearance must invalidate active post callbacks before dismissal",
                 failures)
+    if invalidate_profile is not None and view_disappear is not None:
+        require("profileGeneration += 1" in invalidate_profile and
+                "invalidateProfileImageLoad()" in view_disappear and
+                view_disappear.find("invalidateProfileImageLoad()") <
+                view_disappear.find("invalidatePost()"),
+                "Share disappearance must invalidate profile callbacks before post callbacks",
+                failures)
     require("UIImage(data: data)!" not in swift and "handler: ((image: UIImage?" in url_helper,
             "Image downloads must return optional images instead of force-unwrapping data",
             failures)
@@ -384,6 +420,7 @@ def main():
     location_independent_make_plan = LOCATION_INDEPENDENT_MAKE_PLAN.read_text(encoding="utf-8") if LOCATION_INDEPENDENT_MAKE_PLAN.exists() else ""
     status_dismissal_plan = STATUS_DISMISSAL_PLAN.read_text(encoding="utf-8") if STATUS_DISMISSAL_PLAN.exists() else ""
     post_generation_plan = POST_GENERATION_PLAN.read_text(encoding="utf-8") if POST_GENERATION_PLAN.exists() else ""
+    profile_generation_plan = PROFILE_GENERATION_PLAN.read_text(encoding="utf-8") if PROFILE_GENERATION_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     require(".PHONY: build check lint test" in makefile and "lint test build: check" in makefile,
             "Makefile must expose lint, test, and build aliases for the local baseline",
@@ -430,6 +467,15 @@ def main():
     require("tweet feed failures" in changes,
             "CHANGES must record tweet feed failure guarding",
             failures)
+    profile_generation_guidance = "Profile image callbacks are generation-bound to the visible share screen."
+    for document_name, document in (
+            ("README.md", readme),
+            ("SECURITY.md", security),
+            ("VISION.md", vision),
+            ("CHANGES.md", changes)):
+        require(profile_generation_guidance in document,
+                f"{document_name} must document profile callback lifecycle ownership",
+                failures)
     require("Swift 1-era" in readme and "iOS 8.1" in readme and "Fabric" in readme and "TwitterKit" in readme,
             "README must document the legacy SDK modernization boundary",
             failures)
@@ -603,6 +649,21 @@ def main():
             all(item in post_generation_verification for item in post_generation_required) and
             re.search(r"\b(?:pending|todo|tbd|not run)\b", post_generation_verification, re.IGNORECASE) is None,
             "share post generation plan must record completed verification", failures)
+    profile_generation_statuses = re.findall(r"^Status: .+$", profile_generation_plan, flags=re.MULTILINE)
+    profile_generation_sections = profile_generation_plan.split("## Verification Completed\n", 1)
+    profile_generation_verification = profile_generation_sections[1] if len(profile_generation_sections) == 2 else ""
+    profile_generation_required = (
+        "All four Make gates passed",
+        "absolute Makefile passed from `/tmp`",
+        "python3 -m py_compile scripts/check-baseline.py",
+        "hostile mutations were rejected",
+        "changed-line credential scan passed",
+        "No Xcode, simulator, or physical-device scenario was executed",
+    )
+    require(profile_generation_statuses == ["Status: Completed"] and
+            all(item in profile_generation_verification for item in profile_generation_required) and
+            re.search(r"\b(?:pending|todo|tbd)\b", profile_generation_verification, re.IGNORECASE) is None,
+            "profile image generation plan must record completed verification", failures)
     require("permissions:\n  contents: read" in workflow,
             "Check workflow must use read-only repository permissions",
             failures)

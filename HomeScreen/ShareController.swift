@@ -24,6 +24,7 @@ class ShareController: UIViewController{
     var lBtn: UIBarButtonItem!
     var postInFlight = false
     var postGeneration = 0
+    var profileGeneration = 0
 
     override func viewDidAppear(animated: Bool) {
         self.inputT.becomeFirstResponder()
@@ -59,21 +60,7 @@ class ShareController: UIViewController{
         // Find the users photo
         if let session = Twitter.sharedInstance().session() {
             let userName = session.userName
-            // we need pictures then we are good
-            TweepPicture(userName){ (result: String?) in
-                if let url_string = result {
-                    let url = URL()
-                    if let profileURL = NSURL(string: url_string) {
-                        url.downloadImage(profileURL, {image, error in
-                            if let newImg = image {
-                                let circle = CircleImage(RBResizeImage(newImg, CGSize(width: 100, height: 100)))
-                                self.profilePic!.image = circle
-                                self.profilePic.hidden = false
-                            }
-                        })
-                    }
-                }
-            }
+            startProfileImageLoad(userName)
         }
 
         if getNumberOfImages() == true {
@@ -90,7 +77,46 @@ class ShareController: UIViewController{
 
     override func viewWillDisappear(animated: Bool) {
         super.viewWillDisappear(animated)
+        invalidateProfileImageLoad()
         invalidatePost()
+    }
+
+    func startProfileImageLoad(userName: String) {
+        profileGeneration += 1
+        let generation = profileGeneration
+
+        TweepPicture(userName){ [weak self] (result: String?) in
+            NSOperationQueue.mainQueue().addOperationWithBlock { [weak self] in
+                if let controller = self {
+                    if controller.profileGeneration != generation {
+                        return
+                    }
+
+                    if let url_string = result {
+                        let url = URL()
+                        if let profileURL = NSURL(string: url_string) {
+                            url.downloadImage(profileURL, { [weak self] image, error in
+                                if let controller = self {
+                                    if controller.profileGeneration != generation {
+                                        return
+                                    }
+
+                                    if let newImg = image {
+                                        let circle = CircleImage(RBResizeImage(newImg, CGSize(width: 100, height: 100)))
+                                        controller.profilePic!.image = circle
+                                        controller.profilePic.hidden = false
+                                    }
+                                }
+                            })
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    func invalidateProfileImageLoad() {
+        profileGeneration += 1
     }
 
     func invalidatePost() {

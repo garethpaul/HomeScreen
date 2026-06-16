@@ -34,6 +34,7 @@ Priority:
   error logging, and status submission only after upload success
 - Keep share dismissal behind confirmed status creation
 - Share post callbacks are generation-bound so duplicate taps and stale completions cannot dismiss the composer.
+- Profile image callbacks are generation-bound to the visible share screen.
 - Keep profile image transport on Twitter's `profile_image_url_https` response
   field instead of the legacy cleartext-capable key
 - Keep pinned macOS CI parsing `HomeScreen.xcodeproj` through the canonical

@@ -1,6 +1,6 @@
 # Guard Profile Image Generations
 
-Status: Planned
+Status: Completed
 
 ## Problem
 
@@ -21,7 +21,8 @@ reveal an avatar on a stale screen.
 ## Requirements
 
 1. Each accepted profile-image load must capture a generation owned by the
-   current `ShareController` lifecycle.
+   current `ShareController` lifecycle without retaining a dismissed
+   controller across asynchronous boundaries.
 2. Both the profile URL callback and image download callback must reject stale
    generations before starting later work or mutating UI.
 3. `viewWillDisappear` must invalidate profile callbacks as well as active post
@@ -66,6 +67,8 @@ Linux verification remains static rather than an iOS runtime claim.
 - A current successful image callback transforms, assigns, and then reveals
   the avatar.
 - A stale or failed image callback cannot assign or reveal the avatar.
+- Lookup, main-queue handoff, and download closures do not strongly retain the
+  controller.
 - Disappearance invalidates both profile and post callback generations.
 - Removing generation capture, either stale check, disappearance invalidation,
   success ordering, guidance, or completed evidence fails the portable gate.
@@ -90,3 +93,21 @@ Linux verification remains static rather than an iOS runtime claim.
   status.
 - Compile the Python checker and audit the exact diff, generated artifacts,
   forbidden project/vendor paths, secrets, conflict markers, and whitespace.
+
+## Verification Completed
+
+- All four Make gates passed the static baseline and truthfully reported that
+  `xcodebuild` is unavailable on this Linux host.
+- The absolute Makefile passed from `/tmp`.
+- `python3 -m py_compile scripts/check-baseline.py` and `git diff --check`
+  passed.
+- Nine isolated hostile mutations were rejected for generation capture, the
+  profile URL stale check, the image download stale check, main-queue routing,
+  weak callback ownership, disappearance invalidation, assignment/reveal
+  ordering, guidance, and plan status; hostile mutations were rejected without
+  weakening the checker.
+- The exact intended-path, generated-artifact, forbidden project/vendor path,
+  dependency/workflow drift, conflict-marker, whitespace, and changed-line
+  audits passed. The changed-line credential scan passed.
+- No Xcode, simulator, or physical-device scenario was executed; live Twitter
+  profile lookup and rendered avatar behavior remain device-verification work.
