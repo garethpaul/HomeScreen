@@ -742,6 +742,10 @@ def main():
         "no actionable findings remain",
         "`xcodebuild` and live Twitter services were unavailable on Linux",
         "no guest authentication, search result, table-rendering, refresh-interaction, simulator, or device-networking behavior is claimed",
+        "`32332556006a444d70b76bb07cb09d8472f7b5ac`",
+        "push run `27719581668`",
+        "pull-request run `27719591737`",
+        "PR #9 remained open and mergeable",
     )
     require(tweet_generation_statuses == ["status: completed"] and
             all(item in normalized_tweet_generation_verification

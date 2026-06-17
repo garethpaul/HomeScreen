@@ -127,3 +127,7 @@ guidance. Record only verification that actually runs.
 - `xcodebuild` and live Twitter services were unavailable on Linux, so no guest
   authentication, search result, table-rendering, refresh-interaction,
   simulator, or device-networking behavior is claimed.
+- Exact implementation commit
+  `32332556006a444d70b76bb07cb09d8472f7b5ac` passed canonical push run
+  `27719581668` and pull-request run `27719591737` on hosted macOS.
+- PR #9 remained open and mergeable; no predecessor PR was merged or closed.
