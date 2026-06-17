@@ -49,6 +49,7 @@
 - Home screen screenshots can reveal private apps, messages, accounts, or location hints. Keep uploads user-initiated and avoid raw response or image logging.
 - Keep share-composer dismissal behind validated status creation on the main queue.
 - Share post callbacks are generation-bound so duplicate taps and stale completions cannot dismiss the composer.
+- Keep tweet search, guest-login, model-load, and UI completion callbacks weakly owned and bound to the latest request generation.
 - Treat Twitter session state as optional on presentation paths; expired or missing sessions should not crash profile-image rendering.
 - This looks like an Apple platform project or sample. Xcode, Swift, CocoaPods, and deployment target versions may need to match the original project era.
 

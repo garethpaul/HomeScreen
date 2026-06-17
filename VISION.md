@@ -35,6 +35,8 @@ Priority:
 - Keep share dismissal behind confirmed status creation
 - Share post callbacks are generation-bound so duplicate taps and stale completions cannot dismiss the composer.
 - Profile image callbacks are generation-bound to the visible share screen.
+- Tweet feed callback generations make the latest initial or refresh request
+  authoritative across search, guest login, model loading, and UI completion.
 - Keep profile image transport on Twitter's `profile_image_url_https` response
   field instead of the legacy cleartext-capable key
 - Keep pinned macOS CI parsing `HomeScreen.xcodeproj` through the canonical

@@ -88,6 +88,8 @@ are not logged, and status submission requires a non-nil media identifier.
 The share composer dismisses only after Twitter confirms status creation;
 upload and status failures keep the composer visible.
 Share post callbacks are generation-bound so duplicate taps and stale completions cannot dismiss the composer.
+Tweet feed callbacks are generation-bound so only the latest initial or refresh
+request may replace the table and finish its spinner.
 It reads Twitter's `profile_image_url_https` field so dynamic response URLs
 cannot downgrade profile image downloads to cleartext HTTP.
 The avatar remains hidden during lookup and is revealed only after a successful profile image download
@@ -121,6 +123,8 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Treat Twitter session state as optional on presentation paths; expired or
   missing sessions should not crash profile-image rendering.
 - Profile image callbacks are generation-bound to the visible share screen.
+- Tweet search, guest-login, model-load, and UI completion callbacks are weakly
+  owned and bound to the latest request generation.
 - Treat tweet feed failures as recoverable; Twitter search or guest-login
   failures should complete without leaking loading state.
 

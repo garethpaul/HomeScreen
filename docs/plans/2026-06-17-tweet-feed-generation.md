@@ -2,7 +2,7 @@
 title: "fix: Bind tweet feed callbacks to the latest request"
 type: fix
 date: 2026-06-17
-status: planned
+status: completed
 ---
 
 # fix: Bind tweet feed callbacks to the latest request
@@ -99,3 +99,31 @@ guidance. Record only verification that actually runs.
 - Apple main-thread UI guidance remains authoritative for UIKit state changes;
   this archival project expresses that boundary with
   `NSOperationQueue.mainQueue().addOperationWithBlock`.
+
+## Work Completed
+
+- Routed initial and refresh requests through one generation-capturing start
+  helper.
+- Used weak ownership and stale-generation rejection across search, guest
+  login, tweet loading, and main-queue UI completion.
+- Replaced append-based table mutation with one current-generation array
+  replacement and deterministic empty completion for current failures.
+- Added function-scoped source, ordering, guidance, and plan contracts without
+  changing Twitter endpoints, dependencies, project metadata, or share flows.
+
+## Verification Completed
+
+- All four Make gates passed and external-directory `make check` passed through
+  the absolute Makefile path.
+- Python checker execution, workflow/project/plist/XML validation, and
+  `git diff --check` passed.
+- Twelve isolated implementation mutations were rejected across both entry
+  points, generation capture, weak search/login/load ownership, stale checks at
+  every callback boundary, replacement-vs-append behavior, main-queue
+  completion, and spinner ordering.
+- Plan-aware review identified the missing early stale check in the final tweet
+  model callback; the check was added before model collection, its focused
+  mutation was rejected, and no actionable findings remain.
+- `xcodebuild` and live Twitter services were unavailable on Linux, so no guest
+  authentication, search result, table-rendering, refresh-interaction,
+  simulator, or device-networking behavior is claimed.

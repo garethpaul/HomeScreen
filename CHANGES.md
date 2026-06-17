@@ -1,6 +1,8 @@
 # Changes
 
 - Profile image callbacks are generation-bound to the visible share screen.
+- Tweet feed callbacks are generation-bound so older overlapping searches
+  cannot replace the latest table or finish its spinner.
 - Share post callbacks are generation-bound so duplicate taps and stale completions cannot dismiss the composer.
 - Moved share-composer dismissal behind validated Twitter status creation so
   failed uploads and posts no longer appear successful.

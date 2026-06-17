@@ -27,6 +27,7 @@ LOCATION_INDEPENDENT_MAKE_PLAN = ROOT / "docs/plans/2026-06-13-location-independ
 STATUS_DISMISSAL_PLAN = ROOT / "docs/plans/2026-06-14-successful-status-dismissal.md"
 POST_GENERATION_PLAN = ROOT / "docs/plans/2026-06-15-share-post-generation.md"
 PROFILE_GENERATION_PLAN = ROOT / "docs/plans/2026-06-16-profile-image-generation.md"
+TWEET_GENERATION_PLAN = ROOT / "docs/plans/2026-06-17-tweet-feed-generation.md"
 
 
 def require(condition, message, failures):
@@ -133,6 +134,7 @@ def main():
         "docs/plans/2026-06-14-successful-status-dismissal.md",
         "docs/plans/2026-06-15-share-post-generation.md",
         "docs/plans/2026-06-16-profile-image-generation.md",
+        "docs/plans/2026-06-17-tweet-feed-generation.md",
     ]
 
     for relative_path in required_files:
@@ -384,13 +386,60 @@ def main():
             "Twitter search login failed" in twitter_rest,
             "Twitter search must complete safely when login, request, or connection setup fails",
             failures)
-    require("if tweetIDs.count == 0" in tweets_controller and
-            "self.isLoadingTweets = true" in tweets_controller and
-            "if session == nil" in tweets_controller and
-            "func finishLoadingTweets()" in tweets_controller and
-            "as? TWTRTweet" in tweets_controller,
-            "TweetsController must guard empty IDs, guest-login failures, and loaded tweet casts",
+    setup_tweet_view = extract_braced_block(tweets_controller, "func setupView()")
+    start_tweet_load = extract_braced_block(tweets_controller, "func startTweetLoad()")
+    load_tweets = extract_braced_block(tweets_controller, "func loadTweets(")
+    complete_tweet_load = extract_braced_block(tweets_controller, "func completeTweetLoad(")
+    refresh_tweets = extract_braced_block(tweets_controller, "func refreshInvoked()")
+    require(setup_tweet_view is not None and start_tweet_load is not None and load_tweets is not None and
+            complete_tweet_load is not None and refresh_tweets is not None,
+            "TweetsController request ownership helpers must remain inspectable",
             failures)
+    if setup_tweet_view is not None and start_tweet_load is not None and refresh_tweets is not None:
+        require("startTweetLoad()" in setup_tweet_view and
+                "Search()" not in setup_tweet_view and
+                "tweetGeneration += 1" in start_tweet_load and
+                "let generation = tweetGeneration" in start_tweet_load and
+                "Search() { [weak self]" in start_tweet_load and
+                "NSOperationQueue.mainQueue().addOperationWithBlock { [weak self]" in start_tweet_load and
+                "controller.tweetGeneration != generation" in start_tweet_load and
+                "controller.loadTweets(result, generation: generation)" in start_tweet_load and
+                "startTweetLoad()" in refresh_tweets and
+                "Search()" not in refresh_tweets,
+                "Initial and refresh searches must use one weak, generation-bound start path",
+                failures)
+    if load_tweets is not None:
+        tweet_models_callback = extract_braced_block(
+            load_tweets, "loadTweetsWithIDs(tweetIDs)"
+        )
+        require("tweetGeneration != generation" in load_tweets and
+                "if tweetIDs.count == 0" in load_tweets and
+                "completeTweetLoad(generation, loadedTweets: [])" in load_tweets and
+                "logInGuestWithCompletion { [weak self]" in load_tweets and
+                "controller.tweetGeneration != generation" in load_tweets and
+                "loadTweetsWithIDs(tweetIDs) { [weak self]" in load_tweets and
+                "loadedTweetModels.append(tweet)" in load_tweets and
+                "self.tweets.append" not in load_tweets and
+                "controller.completeTweetLoad(generation, loadedTweets: loadedTweetModels)" in load_tweets,
+                "Tweet login and load callbacks must reject stale generations and collect replacement results weakly",
+                failures)
+        require(tweet_models_callback is not None and
+                "if let controller = self" in tweet_models_callback and
+                "controller.tweetGeneration != generation" in tweet_models_callback and
+                tweet_models_callback.find("controller.tweetGeneration != generation") <
+                tweet_models_callback.find("var loadedTweetModels"),
+                "Tweet model callbacks must reject stale generations before collecting results",
+                failures)
+    if complete_tweet_load is not None:
+        require("NSOperationQueue.mainQueue().addOperationWithBlock { [weak self]" in complete_tweet_load and
+                "controller.tweetGeneration != generation" in complete_tweet_load and
+                "controller.tweets = loadedTweets" in complete_tweet_load and
+                complete_tweet_load.find("controller.tweets = loadedTweets") <
+                complete_tweet_load.find("controller.isLoadingTweets = false") <
+                complete_tweet_load.find("controller.activityIndicator.stopAnimating()") <
+                complete_tweet_load.find("controller.activityIndicator.hidden = true"),
+                "Tweet completion must replace the current feed and finish its spinner on the main queue only for the current generation",
+                failures)
     require("let scanner = NSScanner(string: cString)" in hex_source and "!scanner.scanHexInt(&rgbValue)" in hex_source and "scanner.atEnd" in hex_source,
             "Hex color parser must reject invalid or partial hex strings",
             failures)
@@ -421,6 +470,7 @@ def main():
     status_dismissal_plan = STATUS_DISMISSAL_PLAN.read_text(encoding="utf-8") if STATUS_DISMISSAL_PLAN.exists() else ""
     post_generation_plan = POST_GENERATION_PLAN.read_text(encoding="utf-8") if POST_GENERATION_PLAN.exists() else ""
     profile_generation_plan = PROFILE_GENERATION_PLAN.read_text(encoding="utf-8") if PROFILE_GENERATION_PLAN.exists() else ""
+    tweet_generation_plan = TWEET_GENERATION_PLAN.read_text(encoding="utf-8") if TWEET_GENERATION_PLAN.exists() else ""
     workflow = read(".github/workflows/check.yml")
     require(".PHONY: build check lint test" in makefile and "lint test build: check" in makefile,
             "Makefile must expose lint, test, and build aliases for the local baseline",
@@ -476,6 +526,13 @@ def main():
         require(profile_generation_guidance in document,
                 f"{document_name} must document profile callback lifecycle ownership",
                 failures)
+    require("Tweet feed callbacks are generation-bound so only the latest initial or refresh" in readme and
+            "Tweet feed callbacks are generation-bound and weakly own the controller" in security and
+            "Tweet feed callback generations make the latest initial or refresh request" in vision and
+            "Tweet feed callbacks are generation-bound so older overlapping searches" in changes and
+            "Keep tweet search, guest-login, model-load, and UI completion callbacks weakly owned and bound to the latest request generation." in read("AGENTS.md"),
+            "Docs must record latest-request tweet feed generation ownership",
+            failures)
     require("Swift 1-era" in readme and "iOS 8.1" in readme and "Fabric" in readme and "TwitterKit" in readme,
             "README must document the legacy SDK modernization boundary",
             failures)
@@ -664,6 +721,36 @@ def main():
             all(item in profile_generation_verification for item in profile_generation_required) and
             re.search(r"\b(?:pending|todo|tbd)\b", profile_generation_verification, re.IGNORECASE) is None,
             "profile image generation plan must record completed verification", failures)
+    tweet_generation_statuses = re.findall(
+        r"^status: .+$", tweet_generation_plan, flags=re.MULTILINE
+    )
+    tweet_generation_sections = tweet_generation_plan.split(
+        "## Verification Completed\n", 1
+    )
+    tweet_generation_verification = (
+        tweet_generation_sections[1]
+        if len(tweet_generation_sections) == 2 else ""
+    )
+    normalized_tweet_generation_verification = " ".join(
+        tweet_generation_verification.split()
+    )
+    tweet_generation_required = (
+        "All four Make gates passed",
+        "external-directory `make check` passed",
+        "Twelve isolated implementation mutations were rejected",
+        "missing early stale check in the final tweet model callback",
+        "no actionable findings remain",
+        "`xcodebuild` and live Twitter services were unavailable on Linux",
+        "no guest authentication, search result, table-rendering, refresh-interaction, simulator, or device-networking behavior is claimed",
+    )
+    require(tweet_generation_statuses == ["status: completed"] and
+            all(item in normalized_tweet_generation_verification
+                    for item in tweet_generation_required) and
+            re.search(r"\b(?:pending|todo|tbd|not run|not yet)\b",
+                      tweet_generation_verification,
+                      re.IGNORECASE) is None,
+            "tweet feed generation plan must record completed status, review resolution, actual verification, and the runtime boundary",
+            failures)
     require("permissions:\n  contents: read" in workflow,
             "Check workflow must use read-only repository permissions",
             failures)
