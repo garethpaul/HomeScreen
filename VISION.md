@@ -37,6 +37,10 @@ Priority:
 - Profile image callbacks are generation-bound to the visible share screen.
 - Tweet feed callback generations make the latest initial or refresh request
   authoritative across search, guest login, model loading, and UI completion.
+- Keep screenshot completion exactly-once on the main queue and generation-bind
+  preview/composer writes so older Photos results cannot replace newer UI.
+- Keep legacy upload and status callbacks weakly owned so pending Twitter work
+  cannot retain a dismissed share composer.
 - Keep profile image transport on Twitter's `profile_image_url_https` response
   field instead of the legacy cleartext-capable key
 - Keep pinned macOS CI parsing `HomeScreen.xcodeproj` through the canonical
@@ -68,7 +72,8 @@ logging images without explicit action.
 Twitter credentials and session data must remain out of source control.
 
 Current baseline: `make lint`, `make test`, `make build`, and `make check`
-run `scripts/check-baseline.py` without Xcode.
+run `scripts/check-baseline.py` plus mutation-sensitive async ownership checks
+without building the archival Swift target.
 It verifies that the Fabric build phase uses local placeholders, the
 photo-library permission describes screenshot sharing, uploads require a loaded
 image, Photos screenshot callbacks and screenshot fallback behavior are
@@ -87,6 +92,9 @@ assigned; every failure path keeps the avatar hidden.
 On macOS, the same baseline must use `xcodebuild -list` to confirm that Xcode
 can parse the project. Functional sharing remains a separate manual check
 because it depends on credentials, signing, device state, and retired services.
+The async ownership checks require exactly-once main-queue screenshot
+completion, latest-generation screenshot and tweet UI writes, weak composer
+ownership across upload/status callbacks, and stale profile image clearing.
 
 ## Modernization Boundary
 

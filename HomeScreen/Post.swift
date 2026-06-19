@@ -19,6 +19,17 @@ func getNumberOfImages() -> Bool{
 
 // Get screenshot image if it exists
 func getScreenshotImage(screenSize: CGSize, completion: (result: UIImage?) -> Void) {
+    var completionDelivered = false
+    func complete(result: UIImage?) {
+        NSOperationQueue.mainQueue().addOperationWithBlock {
+            if completionDelivered {
+                return
+            }
+            completionDelivered = true
+            completion(result: result)
+        }
+    }
+
     let images = PHAsset.fetchAssetsWithMediaType(.Image, options: nil)
 
     if let asset = images.lastObject as? PHAsset {
@@ -36,13 +47,13 @@ func getScreenshotImage(screenSize: CGSize, completion: (result: UIImage?) -> Vo
             imageManager.requestImageForAsset(asset,
                 targetSize: imageObj,
                 contentMode: .AspectFill,
-                options: nil,
+                options: options,
                 resultHandler: {(newImage: UIImage!,
                     info: [NSObject : AnyObject]!) in
                     if let screenshot = newImage {
-                        completion(result: screenshot)
+                        complete(screenshot)
                     } else {
-                        completion(result: nil)
+                        complete(nil)
                     }
             })
             return
@@ -51,5 +62,5 @@ func getScreenshotImage(screenSize: CGSize, completion: (result: UIImage?) -> Vo
         }
     }
 
-    completion(result: nil)
+    complete(nil)
 }

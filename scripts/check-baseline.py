@@ -209,13 +209,13 @@ def main():
             failures)
     require("completion: (result: UIImage?) -> Void" in post and
             "if let screenshot = newImage" in post and
-            "completion(result: nil)" in post and
+            "complete(nil)" in post and
             "(result: UIImage?)" in share,
             "Post.swift must safely handle nil screenshot images from Photos",
             failures)
-    require("getScreenshotImage(screenObj) { (result: UIImage?) in" in view_controller and
+    require("getScreenshotImage(screenObj) { [weak self] (result: UIImage?) in" in view_controller and
             "if let screenshot = result" in view_controller and
-            "self.showDefault()" in view_controller,
+            "controller.showDefault()" in view_controller,
             "ViewController must fall back to the default image when Photos returns no screenshot",
             failures)
     require("println(json)" not in upload,
@@ -254,7 +254,7 @@ def main():
                 profile_success.find(image_assignment) < profile_success.find(reveal),
                 "Successful profile image callbacks must assign the image before revealing it",
                 failures)
-    require(share.count("self.profilePic.hidden = true") == 1 and
+    require(share.count("profilePic.hidden = true") >= 2 and
             share.count("controller.profilePic.hidden = false") == 1,
             "Profile image visibility must stay hidden initially and reveal only on success",
             failures)
@@ -324,7 +324,7 @@ def main():
                 failures)
         status_call = extract_braced_block(share_post, "UpdateStatus(text, uploadedMediaID)")
         require(status_call is not None and
-                "self.completePost(generation, succeeded: succeeded)" in status_call,
+                "controller.completePost(generation, succeeded: succeeded)" in status_call,
                 "ShareController must route status completion through generation ownership",
                 failures)
         require(share_post.count('performSegueWithIdentifier("cancelSegue", sender: self)') == 0,
@@ -335,8 +335,8 @@ def main():
                 "let generation = self.postGeneration" in share_post,
                 "ShareController must suppress duplicate posts and capture submission ownership",
                 failures)
-        require("self.completePost(generation, succeeded: succeeded)" in share_post and
-                "self.completePost(generation, succeeded: false)" in share_post,
+        require("controller.completePost(generation, succeeded: succeeded)" in share_post and
+                "controller.completePost(generation, succeeded: false)" in share_post,
                 "ShareController must resolve status and media failure through one generation-bound completion",
                 failures)
     complete_post = extract_braced_block(share, "func completePost(")
@@ -348,11 +348,11 @@ def main():
             "Share post completion and invalidation functions must remain inspectable",
             failures)
     if complete_post is not None:
-        require("NSOperationQueue.mainQueue().addOperationWithBlock" in complete_post and
-                "!self.postInFlight || self.postGeneration != generation" in complete_post and
-                "self.postInFlight = false" in complete_post and
+        require("NSOperationQueue.mainQueue().addOperationWithBlock { [weak self]" in complete_post and
+                "!controller.postInFlight || controller.postGeneration != generation" in complete_post and
+                "controller.postInFlight = false" in complete_post and
                 "if succeeded" in complete_post and
-                'self.performSegueWithIdentifier("cancelSegue", sender: self)' in complete_post,
+                'controller.performSegueWithIdentifier("cancelSegue", sender: controller)' in complete_post,
                 "Share completion must reject stale generations and dismiss successful current posts on the main queue",
                 failures)
     if invalidate_post is not None and view_disappear is not None and close_action is not None:
@@ -425,10 +425,9 @@ def main():
                 failures)
         require(tweet_models_callback is not None and
                 "if let controller = self" in tweet_models_callback and
-                "controller.tweetGeneration != generation" in tweet_models_callback and
-                tweet_models_callback.find("controller.tweetGeneration != generation") <
-                tweet_models_callback.find("var loadedTweetModels"),
-                "Tweet model callbacks must reject stale generations before collecting results",
+                "controller.tweetGeneration != generation" not in tweet_models_callback and
+                "controller.completeTweetLoad(generation, loadedTweets: loadedTweetModels)" in tweet_models_callback,
+                "Tweet model callbacks must defer generation state reads to main-queue completion",
                 failures)
     if complete_tweet_load is not None:
         require("NSOperationQueue.mainQueue().addOperationWithBlock { [weak self]" in complete_tweet_load and
@@ -738,8 +737,7 @@ def main():
         "All four Make gates passed",
         "external-directory `make check` passed",
         "Twelve isolated implementation mutations were rejected",
-        "missing early stale check in the final tweet model callback",
-        "no actionable findings remain",
+        "removed the final callback's off-main controller-generation read",
         "`xcodebuild` and live Twitter services were unavailable on Linux",
         "no guest authentication, search result, table-rendering, refresh-interaction, simulator, or device-networking behavior is claimed",
         "`32332556006a444d70b76bb07cb09d8472f7b5ac`",

@@ -30,8 +30,10 @@ IDs to be discarded by the existing `isLoadingTweets` check.
 
 - R1. Initial load and refresh must enter one `startTweetLoad` ownership path
   that increments and captures a request generation before calling `Search`.
-- R2. Search, guest-login, and tweet-load callbacks must use weak controller
-  ownership and reject stale generations before starting later work.
+- R2. Search and guest-login callbacks must use weak controller ownership and
+  reject stale generations before starting later network work. The final tweet
+  callback may collect response-local models off-main, but must defer controller
+  generation reads and all state mutation to the main-queue completion helper.
 - R3. All accepted UI/state completion must run on the main queue and reject a
   stale generation before replacing tweets or changing spinner/loading state.
 - R4. A successful current request must replace the feed as one array instead
@@ -121,9 +123,10 @@ guidance. Record only verification that actually runs.
   points, generation capture, weak search/login/load ownership, stale checks at
   every callback boundary, replacement-vs-append behavior, main-queue
   completion, and spinner ordering.
-- Plan-aware review identified the missing early stale check in the final tweet
-  model callback; the check was added before model collection, its focused
-  mutation was rejected, and no actionable findings remain.
+- Follow-up review removed the final callback's off-main controller-generation
+  read. Response-local model collection remains off-main, while the existing
+  main-queue completion helper performs the authoritative stale-generation
+  check before any controller or UIKit state changes.
 - `xcodebuild` and live Twitter services were unavailable on Linux, so no guest
   authentication, search result, table-rendering, refresh-interaction,
   simulator, or device-networking behavior is claimed.

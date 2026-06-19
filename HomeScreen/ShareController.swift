@@ -25,6 +25,7 @@ class ShareController: UIViewController{
     var postInFlight = false
     var postGeneration = 0
     var profileGeneration = 0
+    var screenshotGeneration = 0
 
     override func viewDidAppear(animated: Bool) {
         self.inputT.becomeFirstResponder()
@@ -63,25 +64,19 @@ class ShareController: UIViewController{
             startProfileImageLoad(userName)
         }
 
-        if getNumberOfImages() == true {
-            let screenObj = CGSize(width:self.screenSize.width*2, height: self.screenSize.height*2)
-            // get Screenshot
-            getScreenshotImage(screenObj) { (result: UIImage?) in
-                if let screenshot = result {
-                    self.screenImage.image = screenshot
-                    //self.homeScreen.image = screenshot
-                }
-            }
-        }
+        startScreenshotLoad()
     }
 
     override func viewWillDisappear(animated: Bool) {
         super.viewWillDisappear(animated)
         invalidateProfileImageLoad()
+        invalidateScreenshotLoad()
         invalidatePost()
     }
 
     func startProfileImageLoad(userName: String) {
+        profilePic.image = nil
+        profilePic.hidden = true
         profileGeneration += 1
         let generation = profileGeneration
 
@@ -119,20 +114,45 @@ class ShareController: UIViewController{
         profileGeneration += 1
     }
 
+    func startScreenshotLoad() {
+        screenshotGeneration += 1
+        let generation = screenshotGeneration
+
+        if getNumberOfImages() == true {
+            let screenObj = CGSize(width:self.screenSize.width*2, height: self.screenSize.height*2)
+            getScreenshotImage(screenObj) { [weak self] (result: UIImage?) in
+                if let controller = self {
+                    if controller.screenshotGeneration != generation {
+                        return
+                    }
+                    if let screenshot = result {
+                        controller.screenImage.image = screenshot
+                    }
+                }
+            }
+        }
+    }
+
+    func invalidateScreenshotLoad() {
+        screenshotGeneration += 1
+    }
+
     func invalidatePost() {
         postGeneration += 1
         postInFlight = false
     }
 
     func completePost(generation: Int, succeeded: Bool) {
-        NSOperationQueue.mainQueue().addOperationWithBlock {
-            if !self.postInFlight || self.postGeneration != generation {
-                return
-            }
+        NSOperationQueue.mainQueue().addOperationWithBlock { [weak self] in
+            if let controller = self {
+                if !controller.postInFlight || controller.postGeneration != generation {
+                    return
+                }
 
-            self.postInFlight = false
-            if succeeded {
-                self.performSegueWithIdentifier("cancelSegue", sender: self)
+                controller.postInFlight = false
+                if succeeded {
+                    controller.performSegueWithIdentifier("cancelSegue", sender: controller)
+                }
             }
         }
     }
@@ -158,13 +178,17 @@ class ShareController: UIViewController{
                 let generation = self.postGeneration
 
                 // Upload the data to uploads.twitter.com and then use the media_id to update status
-                UploadMedia(media) { (media_id: String?) in
-                    if let uploadedMediaID = media_id {
-                        UpdateStatus(text, uploadedMediaID) { (succeeded: Bool) in
-                            self.completePost(generation, succeeded: succeeded)
+                UploadMedia(media) { [weak self] (media_id: String?) in
+                    if let controller = self {
+                        if let uploadedMediaID = media_id {
+                            UpdateStatus(text, uploadedMediaID) { [weak self] (succeeded: Bool) in
+                                if let controller = self {
+                                    controller.completePost(generation, succeeded: succeeded)
+                                }
+                            }
+                        } else {
+                            controller.completePost(generation, succeeded: false)
                         }
-                    } else {
-                        self.completePost(generation, succeeded: false)
                     }
                 }
             }

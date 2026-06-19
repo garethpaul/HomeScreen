@@ -1,5 +1,11 @@
 # Changes
 
+- Screenshot requests now pass their high-quality Photos options, complete once
+  on the main queue, and reject stale controller generations.
+- Legacy upload, status, and queued completion callbacks weakly own the share
+  composer so dismissed UI is not retained by pending Twitter work.
+- New profile requests clear stale avatar state, and final tweet callbacks defer
+  controller generation reads to the main-queue completion boundary.
 - Profile image callbacks are generation-bound to the visible share screen.
 - Tweet feed callbacks are generation-bound so older overlapping searches
   cannot replace the latest table or finish its spinner.

@@ -135,9 +135,6 @@ class TweetsController: UITableViewController, TWTRTweetViewDelegate  {
                     Twitter.sharedInstance().APIClient.loadTweetsWithIDs(tweetIDs) { [weak self]
                         (twttrs, error) -> Void in
                         if let controller = self {
-                            if controller.tweetGeneration != generation {
-                                return
-                            }
                             var loadedTweetModels: [TWTRTweet] = []
                             if let loadedTweets = twttrs {
                                 for item in loadedTweets {

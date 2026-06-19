@@ -70,11 +70,19 @@ make build
 make check
 ```
 
-The `lint`, `test`, and `build` targets intentionally alias the static baseline
-on hosts without the legacy Xcode toolchain, so the standard local gate commands
-stay available while preserving the single source of truth.
+The `lint`, `test`, and `build` targets intentionally alias the maintained
+baseline on hosts without the legacy Xcode toolchain, so the standard local gate
+commands stay available while preserving the single source of truth.
 
-The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace XML, checks the Xcode project metadata, verifies the legacy Swift and framework inventory, and guards against checked-in Fabric credential literals, missing photo-library permission text, unsafe empty-screenshot uploads, nil screenshot callbacks, screenshot fallback behavior, nil-safe Twitter/profile image and write response handling, missing Twitter session guards on the share screen, raw Twitter upload-response logging, deprecated update_with_media helper code, and invalid hex color parsing.
+The baseline runs `scripts/check-baseline.py` plus mutation-sensitive async
+ownership checks. It parses plist/storyboard/workspace XML, checks the Xcode
+project metadata, verifies the legacy Swift and framework inventory, and guards
+against checked-in Fabric credential literals, missing photo-library permission
+text, unsafe empty-screenshot uploads, repeated or stale screenshot completion,
+nil-safe screenshot fallback behavior, Twitter/profile image and write response
+handling, missing Twitter
+session guards on the share screen, raw Twitter upload-response logging,
+deprecated update_with_media helper code, and invalid hex color parsing.
 It also guards JPEG media data creation so screenshot uploads use a valid
 compression quality and skip upload when image encoding fails.
 It also guards tweet feed failures so search/login errors complete safely and

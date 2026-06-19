@@ -49,6 +49,10 @@ using real credentials or account data in a modernized build.
 If this project requests device permissions such as location, camera, microphone, contacts, Bluetooth, health data, or local storage access, reports should describe the permission involved and whether sensitive data can be accessed, persisted, or transmitted unexpectedly. Please avoid testing against real third-party user data or accounts you do not control.
 
 Home screen screenshots and photo-library contents can reveal private apps, conversations, accounts, or location hints. Photo-library access should remain user-visible, uploads should remain user-initiated, and upload responses or image data should not be logged.
+Photos result handlers must be treated as potentially multi-delivery unless the
+request explicitly selects high-quality delivery. Screenshot completion is
+serialized and accepted once, and controller generations decide whether the
+result still owns the visible UI.
 Tweet feed failures should complete without forcing optional error values or
 leaving the feed in a loading state after Twitter search or guest-login errors.
 Profile-image requests should complete explicitly on malformed or failed
