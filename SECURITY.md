@@ -49,12 +49,27 @@ using real credentials or account data in a modernized build.
 If this project requests device permissions such as location, camera, microphone, contacts, Bluetooth, health data, or local storage access, reports should describe the permission involved and whether sensitive data can be accessed, persisted, or transmitted unexpectedly. Please avoid testing against real third-party user data or accounts you do not control.
 
 Home screen screenshots and photo-library contents can reveal private apps, conversations, accounts, or location hints. Photo-library access should remain user-visible, uploads should remain user-initiated, and upload responses or image data should not be logged.
+Photos result handlers must be treated as potentially multi-delivery unless the
+request explicitly selects high-quality delivery. Screenshot completion is
+serialized and accepted once, and controller generations decide whether the
+result still owns the visible UI.
 Tweet feed failures should complete without forcing optional error values or
 leaving the feed in a loading state after Twitter search or guest-login errors.
 Profile-image requests should complete explicitly on malformed or failed
 responses rather than leaving account-adjacent presentation state unresolved.
+Profile image callbacks are generation-bound to the visible share screen.
+Tweet feed callbacks are generation-bound and weakly own the controller so an
+older request cannot replace the current table or finish a newer spinner.
+Media upload failures should complete with a nil identifier instead of logging
+request or connection objects, and status submission should require a non-nil
+uploaded media identifier.
+Preserve success-only share dismissal so transport or malformed-response
+failures cannot appear to the user as a completed post.
+Share post callbacks are generation-bound so duplicate taps and stale completions cannot dismiss the composer.
 Profile-image metadata must use Twitter's `profile_image_url_https` field; the
 legacy `profile_image_url` response can downgrade dynamic downloads to HTTP.
+A success-only profile image reveal keeps failed or incomplete account-image
+responses from exposing stale presentation state.
 
 ## Dependency and Supply Chain Security
 

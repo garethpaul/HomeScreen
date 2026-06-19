@@ -22,6 +22,7 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
     var shareBtn: UIButton!
     var assetLibrary : ALAssetsLibrary = ALAssetsLibrary()
     var lView: UIImageView!
+    var screenshotGeneration = 0
 
     let screenSize: CGRect = UIScreen.mainScreen().bounds
 
@@ -52,6 +53,8 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
     }
 
     func getLatestImage(){
+        screenshotGeneration += 1
+        let generation = screenshotGeneration
 
         // If there are images to find
         if getNumberOfImages() == true {
@@ -60,14 +63,19 @@ class ViewController: UIViewController, UINavigationControllerDelegate {
             let screenObj = CGSize(width:screenSize.width*2, height: screenSize.height*2)
 
             // get Screenshot if the last known screen shot appears to be valid
-            getScreenshotImage(screenObj) { (result: UIImage?) in
-                if let screenshot = result {
-                    // set some images
-                    self.homeScreen.image = screenshot
-                    self.screenShot = screenshot
-                    self.homeScreen.hidden = false
-                } else {
-                    self.showDefault()
+            getScreenshotImage(screenObj) { [weak self] (result: UIImage?) in
+                if let controller = self {
+                    if controller.screenshotGeneration != generation {
+                        return
+                    }
+                    if let screenshot = result {
+                        // set some images
+                        controller.homeScreen.image = screenshot
+                        controller.screenShot = screenshot
+                        controller.homeScreen.hidden = false
+                    } else {
+                        controller.showDefault()
+                    }
                 }
             }
         } else {

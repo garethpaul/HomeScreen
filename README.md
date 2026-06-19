@@ -70,11 +70,19 @@ make build
 make check
 ```
 
-The `lint`, `test`, and `build` targets intentionally alias the static baseline
-on hosts without the legacy Xcode toolchain, so the standard local gate commands
-stay available while preserving the single source of truth.
+The `lint`, `test`, and `build` targets intentionally alias the maintained
+baseline on hosts without the legacy Xcode toolchain, so the standard local gate
+commands stay available while preserving the single source of truth.
 
-The baseline runs `scripts/check-baseline.py`, parses plist/storyboard/workspace XML, checks the Xcode project metadata, verifies the legacy Swift and framework inventory, and guards against checked-in Fabric credential literals, missing photo-library permission text, unsafe empty-screenshot uploads, nil screenshot callbacks, screenshot fallback behavior, nil-safe Twitter/profile image and write response handling, missing Twitter session guards on the share screen, raw Twitter upload-response logging, deprecated update_with_media helper code, and invalid hex color parsing.
+The baseline runs `scripts/check-baseline.py` plus mutation-sensitive async
+ownership checks. It parses plist/storyboard/workspace XML, checks the Xcode
+project metadata, verifies the legacy Swift and framework inventory, and guards
+against checked-in Fabric credential literals, missing photo-library permission
+text, unsafe empty-screenshot uploads, repeated or stale screenshot completion,
+nil-safe screenshot fallback behavior, Twitter/profile image and write response
+handling, missing Twitter
+session guards on the share screen, raw Twitter upload-response logging,
+deprecated update_with_media helper code, and invalid hex color parsing.
 It also guards JPEG media data creation so screenshot uploads use a valid
 compression quality and skip upload when image encoding fails.
 It also guards tweet feed failures so search/login errors complete safely and
@@ -82,8 +90,18 @@ the loading indicator is cleared without force-casting returned tweet objects.
 Profile-image lookup now completes with an optional result on request,
 transport, JSON, and missing-field failures so share-screen setup cannot wait
 indefinitely for a callback.
+Media upload now completes with an optional identifier on request, transport,
+response, JSON, and missing-ID failures. Upload request and connection objects
+are not logged, and status submission requires a non-nil media identifier.
+The share composer dismisses only after Twitter confirms status creation;
+upload and status failures keep the composer visible.
+Share post callbacks are generation-bound so duplicate taps and stale completions cannot dismiss the composer.
+Tweet feed callbacks are generation-bound so only the latest initial or refresh
+request may replace the table and finish its spinner.
 It reads Twitter's `profile_image_url_https` field so dynamic response URLs
 cannot downgrade profile image downloads to cleartext HTTP.
+The avatar remains hidden during lookup and is revealed only after a successful profile image download
+and image assignment.
 
 The pinned GitHub Actions check runs `make check` on `macos-15`. When Xcode is
 available, the baseline also runs `xcodebuild -list -project HomeScreen.xcodeproj`
@@ -112,10 +130,16 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Home screen screenshots can reveal private apps, messages, accounts, or location hints. Keep uploads user-initiated and avoid raw response or image logging.
 - Treat Twitter session state as optional on presentation paths; expired or
   missing sessions should not crash profile-image rendering.
+- Profile image callbacks are generation-bound to the visible share screen.
+- Tweet search, guest-login, model-load, and UI completion callbacks are weakly
+  owned and bound to the latest request generation.
 - Treat tweet feed failures as recoverable; Twitter search or guest-login
   failures should complete without leaking loading state.
 
 ## Maintenance Notes
+
+- Every Make verification target derives the checkout root from the loaded
+  Makefile, so an absolute Makefile path works from any working directory.
 
 This is an archival Swift 1-era baseline with an iOS 8.1 deployment target and
 vendored Fabric, Crashlytics, and TwitterKit binaries. Those services and SDKs

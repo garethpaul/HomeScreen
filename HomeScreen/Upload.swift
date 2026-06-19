@@ -9,7 +9,7 @@ import Foundation
 import TwitterKit
 
 // Send HTTP request to upload media.
-func UploadMedia(data: NSData, completion: (result: String) -> Void) {
+func UploadMedia(data: NSData, completion: (result: String?) -> Void) {
 
     // setup some type aliases to handle regular wording for JSON type objects
     typealias JSON = AnyObject
@@ -52,17 +52,14 @@ func UploadMedia(data: NSData, completion: (result: String) -> Void) {
 
                             // Return media_id_string back so that the next step of magic can occur.
                             completion(result: media_id_string)
+                            return
                         }
                     }
                 }
-                
-
-            } else {
-                println("error \(connectionError)")
             }
+            completion(result: nil)
         }
     } else {
-        println("error \(clientError)")
+        completion(result: nil)
     }
 }
-

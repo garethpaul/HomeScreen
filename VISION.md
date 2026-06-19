@@ -30,6 +30,17 @@ Priority:
   state instead of crashing or hanging
 - Keep profile-image lookup completion total across request and response
   failures so presentation setup does not hang
+- Keep media-upload completion total with an optional identifier, no transport
+  error logging, and status submission only after upload success
+- Keep share dismissal behind confirmed status creation
+- Share post callbacks are generation-bound so duplicate taps and stale completions cannot dismiss the composer.
+- Profile image callbacks are generation-bound to the visible share screen.
+- Tweet feed callback generations make the latest initial or refresh request
+  authoritative across search, guest login, model loading, and UI completion.
+- Keep screenshot completion exactly-once on the main queue and generation-bind
+  preview/composer writes so older Photos results cannot replace newer UI.
+- Keep legacy upload and status callbacks weakly owned so pending Twitter work
+  cannot retain a dismissed share composer.
 - Keep profile image transport on Twitter's `profile_image_url_https` response
   field instead of the legacy cleartext-capable key
 - Keep pinned macOS CI parsing `HomeScreen.xcodeproj` through the canonical
@@ -61,22 +72,29 @@ logging images without explicit action.
 Twitter credentials and session data must remain out of source control.
 
 Current baseline: `make lint`, `make test`, `make build`, and `make check`
-run `scripts/check-baseline.py` without Xcode.
+run `scripts/check-baseline.py` plus mutation-sensitive async ownership checks
+without building the archival Swift target.
 It verifies that the Fabric build phase uses local placeholders, the
 photo-library permission describes screenshot sharing, uploads require a loaded
 image, Photos screenshot callbacks and screenshot fallback behavior are
 nil-safe, Twitter JSON, profile image, and write response data handling are
 nil-safe, share-screen Twitter session access is guarded, raw upload responses
-are not logged, deprecated update_with_media helper code stays removed, and the
+are not logged, media-upload failures return an optional identifier without
+logging transport objects, deprecated update_with_media helper code stays removed, and the
 legacy project/framework inventory remains visible. JPEG media data creation
 must use a valid compression quality and be guarded before upload.
 Tweet feed failures must complete safely and clear loading state when Twitter
 search or guest-login setup fails.
 Dynamic profile image downloads must originate from `profile_image_url_https`
 because literal source endpoint checks cannot validate response-provided URLs.
+Successful profile images become visible only after the transformed image is
+assigned; every failure path keeps the avatar hidden.
 On macOS, the same baseline must use `xcodebuild -list` to confirm that Xcode
 can parse the project. Functional sharing remains a separate manual check
 because it depends on credentials, signing, device state, and retired services.
+The async ownership checks require exactly-once main-queue screenshot
+completion, latest-generation screenshot and tweet UI writes, weak composer
+ownership across upload/status callbacks, and stale profile image clearing.
 
 ## Modernization Boundary
 

@@ -22,6 +22,10 @@ class ShareController: UIViewController{
     var leftButton: UIImage!
     var leftView: UIImageView!
     var lBtn: UIBarButtonItem!
+    var postInFlight = false
+    var postGeneration = 0
+    var profileGeneration = 0
+    var screenshotGeneration = 0
 
     override func viewDidAppear(animated: Bool) {
         self.inputT.becomeFirstResponder()
@@ -57,30 +61,97 @@ class ShareController: UIViewController{
         // Find the users photo
         if let session = Twitter.sharedInstance().session() {
             let userName = session.userName
-            // we need pictures then we are good
-            TweepPicture(userName){ (result: String?) in
-                if let url_string = result {
-                    let url = URL()
-                    if let profileURL = NSURL(string: url_string) {
-                        url.downloadImage(profileURL, {image, error in
-                            if let newImg = image {
-                                let circle = CircleImage(RBResizeImage(newImg, CGSize(width: 100, height: 100)))
-                                self.profilePic!.image = circle
-                                self.profilePic.hidden = true
-                            }
-                        })
+            startProfileImageLoad(userName)
+        }
+
+        startScreenshotLoad()
+    }
+
+    override func viewWillDisappear(animated: Bool) {
+        super.viewWillDisappear(animated)
+        invalidateProfileImageLoad()
+        invalidateScreenshotLoad()
+        invalidatePost()
+    }
+
+    func startProfileImageLoad(userName: String) {
+        profilePic.image = nil
+        profilePic.hidden = true
+        profileGeneration += 1
+        let generation = profileGeneration
+
+        TweepPicture(userName){ [weak self] (result: String?) in
+            NSOperationQueue.mainQueue().addOperationWithBlock { [weak self] in
+                if let controller = self {
+                    if controller.profileGeneration != generation {
+                        return
+                    }
+
+                    if let url_string = result {
+                        let url = URL()
+                        if let profileURL = NSURL(string: url_string) {
+                            url.downloadImage(profileURL, { [weak self] image, error in
+                                if let controller = self {
+                                    if controller.profileGeneration != generation {
+                                        return
+                                    }
+
+                                    if let newImg = image {
+                                        let circle = CircleImage(RBResizeImage(newImg, CGSize(width: 100, height: 100)))
+                                        controller.profilePic!.image = circle
+                                        controller.profilePic.hidden = false
+                                    }
+                                }
+                            })
+                        }
                     }
                 }
             }
         }
+    }
+
+    func invalidateProfileImageLoad() {
+        profileGeneration += 1
+    }
+
+    func startScreenshotLoad() {
+        screenshotGeneration += 1
+        let generation = screenshotGeneration
 
         if getNumberOfImages() == true {
             let screenObj = CGSize(width:self.screenSize.width*2, height: self.screenSize.height*2)
-            // get Screenshot
-            getScreenshotImage(screenObj) { (result: UIImage?) in
-                if let screenshot = result {
-                    self.screenImage.image = screenshot
-                    //self.homeScreen.image = screenshot
+            getScreenshotImage(screenObj) { [weak self] (result: UIImage?) in
+                if let controller = self {
+                    if controller.screenshotGeneration != generation {
+                        return
+                    }
+                    if let screenshot = result {
+                        controller.screenImage.image = screenshot
+                    }
+                }
+            }
+        }
+    }
+
+    func invalidateScreenshotLoad() {
+        screenshotGeneration += 1
+    }
+
+    func invalidatePost() {
+        postGeneration += 1
+        postInFlight = false
+    }
+
+    func completePost(generation: Int, succeeded: Bool) {
+        NSOperationQueue.mainQueue().addOperationWithBlock { [weak self] in
+            if let controller = self {
+                if !controller.postInFlight || controller.postGeneration != generation {
+                    return
+                }
+
+                controller.postInFlight = false
+                if succeeded {
+                    controller.performSegueWithIdentifier("cancelSegue", sender: controller)
                 }
             }
         }
@@ -99,15 +170,29 @@ class ShareController: UIViewController{
         // Get the home screen NSData to upload
         if let image = self.screenImage.image {
             if let media = UIImageJPEGRepresentation(image, 1.0) {
+                if self.postInFlight {
+                    return
+                }
+                self.postInFlight = true
+                self.postGeneration += 1
+                let generation = self.postGeneration
+
                 // Upload the data to uploads.twitter.com and then use the media_id to update status
-                UploadMedia(media) { (media_id: String) in
-                    UpdateStatus(text, media_id)
+                UploadMedia(media) { [weak self] (media_id: String?) in
+                    if let controller = self {
+                        if let uploadedMediaID = media_id {
+                            UpdateStatus(text, uploadedMediaID) { [weak self] (succeeded: Bool) in
+                                if let controller = self {
+                                    controller.completePost(generation, succeeded: succeeded)
+                                }
+                            }
+                        } else {
+                            controller.completePost(generation, succeeded: false)
+                        }
+                    }
                 }
             }
         }
-
-        // Send the user back to the initial "main" screen
-        self.performSegueWithIdentifier("cancelSegue", sender: self)
 
     }
 
@@ -115,6 +200,7 @@ class ShareController: UIViewController{
     //
     func close(){
         self.view.endEditing(true)
+        invalidatePost()
 
         // Send the user back to the initial "main" screen
         self.performSegueWithIdentifier("cancelSegue", sender: self)

@@ -29,6 +29,7 @@ class TweetsController: UITableViewController, TWTRTweetViewDelegate  {
     let tweetTableCellReuseIdentifier = "TweetCell"
 
     var isLoadingTweets = false
+    var tweetGeneration = 0
     var prev: Int?
 
 
@@ -69,8 +70,6 @@ class TweetsController: UITableViewController, TWTRTweetViewDelegate  {
         activityIndicator.frame = CGRectMake(100, 100, 100, 100);
         activityIndicator.frame.origin.x = (self.view.frame.size.width - activityIndicator.frame.size.width) / 2
         activityIndicator.frame.origin.y = (self.view.frame.size.height/2) - 100
-        activityIndicator.startAnimating()
-        self.activityIndicator.hidden = false
         self.view.addSubview( activityIndicator )
 
 
@@ -80,81 +79,92 @@ class TweetsController: UITableViewController, TWTRTweetViewDelegate  {
         // Register the identifier for TWTRTweetTableViewCell.
         self.tableView.registerClass(TWTRTweetTableViewCell.self, forCellReuseIdentifier: tweetTableCellReuseIdentifier)
 
-        dispatch_async(dispatch_get_main_queue()) {
-            // Send a request to the Search API. Check out TVSearchAPI.swift for details..
-            Search() { (result: [String]) in
-                // Load the array back to display the Tweets
-                self.loadTweets(result)
-            }
-
-
-
-        }
+        startTweetLoad()
 
 
 
 
     }
 
-    func loadTweets(tweetIDs: [String]) {
-        // Do not trigger another request if one is already in progress.
-        if self.isLoadingTweets {
+    func startTweetLoad() {
+        tweetGeneration += 1
+        let generation = tweetGeneration
+        isLoadingTweets = true
+        activityIndicator.startAnimating()
+        activityIndicator.hidden = false
+
+        Search() { [weak self] (result: [String]) in
+            NSOperationQueue.mainQueue().addOperationWithBlock { [weak self] in
+                if let controller = self {
+                    if controller.tweetGeneration != generation {
+                        return
+                    }
+                    controller.loadTweets(result, generation: generation)
+                }
+            }
+        }
+    }
+
+    func loadTweets(tweetIDs: [String], generation: Int) {
+        if tweetGeneration != generation {
             return
         }
-
         if tweetIDs.count == 0 {
-            self.finishLoadingTweets()
+            completeTweetLoad(generation, loadedTweets: [])
             return
         }
-
-        self.isLoadingTweets = true
 
         // load tweets with guest login
-        Twitter.sharedInstance().logInGuestWithCompletion { (session: TWTRGuestSession!, error: NSError!) in
-            if session == nil {
-                if let guestError = error {
-                    println("Error: \(guestError.localizedDescription)")
-                } else {
-                    println("Error: Twitter guest login failed")
-                }
-                self.finishLoadingTweets()
-                return
-            }
+        Twitter.sharedInstance().logInGuestWithCompletion { [weak self] (session: TWTRGuestSession!, error: NSError!) in
+            NSOperationQueue.mainQueue().addOperationWithBlock { [weak self] in
+                if let controller = self {
+                    if controller.tweetGeneration != generation {
+                        return
+                    }
+                    if session == nil {
+                        if let guestError = error {
+                            println("Error: \(guestError.localizedDescription)")
+                        } else {
+                            println("Error: Twitter guest login failed")
+                        }
+                        controller.completeTweetLoad(generation, loadedTweets: [])
+                        return
+                    }
 
-            // Find the tweets with the tweetIDs
-            Twitter.sharedInstance().APIClient.loadTweetsWithIDs(tweetIDs) {
-                (twttrs, error) -> Void in
-
-                // If there are tweets do something magical
-                if let loadedTweets = twttrs {
-
-                    // Loop through tweets and do something
-                    for i in loadedTweets {
-                        // Append the Tweet to the Tweets to display in the table view.
-                        if let tweet = i as? TWTRTweet {
-                            self.tweets.append(tweet)
+                    // Find the tweets with the tweetIDs
+                    Twitter.sharedInstance().APIClient.loadTweetsWithIDs(tweetIDs) { [weak self]
+                        (twttrs, error) -> Void in
+                        if let controller = self {
+                            var loadedTweetModels: [TWTRTweet] = []
+                            if let loadedTweets = twttrs {
+                                for item in loadedTweets {
+                                    if let tweet = item as? TWTRTweet {
+                                        loadedTweetModels.append(tweet)
+                                    }
+                                }
+                            } else {
+                                println(error)
+                            }
+                            controller.completeTweetLoad(generation, loadedTweets: loadedTweetModels)
                         }
                     }
-                } else {
-                    println(error)
                 }
-                // once loaded
-
-                self.finishLoadingTweets()
-
             }
         }
-
     }
 
-    func finishLoadingTweets() {
-        self.isLoadingTweets = false
-
-        // Stop animating the spinner
-        self.activityIndicator.stopAnimating()
-
-        // Remove the spinner
-        self.activityIndicator.hidden = true
+    func completeTweetLoad(generation: Int, loadedTweets: [TWTRTweet]) {
+        NSOperationQueue.mainQueue().addOperationWithBlock { [weak self] in
+            if let controller = self {
+                if controller.tweetGeneration != generation {
+                    return
+                }
+                controller.tweets = loadedTweets
+                controller.isLoadingTweets = false
+                controller.activityIndicator.stopAnimating()
+                controller.activityIndicator.hidden = true
+            }
+        }
     }
 
 
@@ -168,9 +178,7 @@ class TweetsController: UITableViewController, TWTRTweetViewDelegate  {
 
     func refreshInvoked() {
         // Trigger a load for the most recent Tweets.
-        Search() { (result: [String]) in
-            self.loadTweets(result)
-        }
+        startTweetLoad()
     }
 
     // MARK: TWTRTweetViewDelegate

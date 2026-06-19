@@ -1,5 +1,28 @@
 # Changes
 
+- Screenshot requests now pass their high-quality Photos options, complete once
+  on the main queue, and reject stale controller generations.
+- Legacy upload, status, and queued completion callbacks weakly own the share
+  composer so dismissed UI is not retained by pending Twitter work.
+- New profile requests clear stale avatar state, and final tweet callbacks defer
+  controller generation reads to the main-queue completion boundary.
+- Profile image callbacks are generation-bound to the visible share screen.
+- Tweet feed callbacks are generation-bound so older overlapping searches
+  cannot replace the latest table or finish its spinner.
+- Share post callbacks are generation-bound so duplicate taps and stale completions cannot dismiss the composer.
+- Moved share-composer dismissal behind validated Twitter status creation so
+  failed uploads and posts no longer appear successful.
+
+## 2026-06-13
+
+- Made every Make verification target derive the checkout root so the static
+  baseline works from external directories.
+- Reveal the profile image only after a successful download and transformed
+  image assignment; failed lookup paths retain the initial hidden state.
+- Made media upload completion return an optional identifier across request,
+  transport, response, JSON, and missing-ID failures; removed upload transport
+  error logging and guarded status submission on successful media ID extraction.
+
 ## 2026-06-12
 
 - Switched profile-image lookup to Twitter's `profile_image_url_https` response
