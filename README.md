@@ -128,6 +128,9 @@ When the required SDK or runtime is unavailable, use static checks and source re
 - Review changes touching file, media, JSON, XML, CSV, OCR, or data parsing; examples from the scan include Crashlytics.framework/Versions/A/Resources/Info.plist, Fabric.framework/Versions/A/Resources/Info.plist, HomeScreen/Images.swift, HomeScreen/Info.plist, and 6 more.
 - Review changes touching database, model, or persistence code; examples from the scan include HomeScreen/TweetsController.swift, TwitterKit.framework/Versions/A/Headers/TWTRTweetTableViewCell.h, TwitterKit.framework/Versions/A/Headers/TWTRTweetViewDelegate.h.
 - Home screen screenshots can reveal private apps, messages, accounts, or location hints. Keep uploads user-initiated and avoid raw response or image logging.
+- Twitter profile, search, guest-login, and tweet-model failures log only stable
+  categories; raw request, transport, and localized error details stay out of
+  learner-facing diagnostics.
 - Treat Twitter session state as optional on presentation paths; expired or
   missing sessions should not crash profile-image rendering.
 - Profile image callbacks are generation-bound to the visible share screen.

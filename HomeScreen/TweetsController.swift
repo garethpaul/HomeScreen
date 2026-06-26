@@ -122,11 +122,7 @@ class TweetsController: UITableViewController, TWTRTweetViewDelegate  {
                         return
                     }
                     if session == nil {
-                        if let guestError = error {
-                            println("Error: \(guestError.localizedDescription)")
-                        } else {
-                            println("Error: Twitter guest login failed")
-                        }
+                        println("Twitter guest login failed")
                         controller.completeTweetLoad(generation, loadedTweets: [])
                         return
                     }
@@ -143,7 +139,7 @@ class TweetsController: UITableViewController, TWTRTweetViewDelegate  {
                                     }
                                 }
                             } else {
-                                println(error)
+                                println("Twitter tweet loading failed")
                             }
                             controller.completeTweetLoad(generation, loadedTweets: loadedTweetModels)
                         }

@@ -28,6 +28,7 @@ Priority:
 - Keep JPEG media data generation guarded before screenshot uploads
 - Keep tweet feed failures recoverable so search/login errors clear loading
   state instead of crashing or hanging
+- Keep Twitter read-path diagnostics category-only and free of raw error details
 - Keep profile-image lookup completion total across request and response
   failures so presentation setup does not hang
 - Keep media-upload completion total with an optional identifier, no transport
