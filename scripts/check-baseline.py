@@ -28,6 +28,7 @@ STATUS_DISMISSAL_PLAN = ROOT / "docs/plans/2026-06-14-successful-status-dismissa
 POST_GENERATION_PLAN = ROOT / "docs/plans/2026-06-15-share-post-generation.md"
 PROFILE_GENERATION_PLAN = ROOT / "docs/plans/2026-06-16-profile-image-generation.md"
 TWEET_GENERATION_PLAN = ROOT / "docs/plans/2026-06-17-tweet-feed-generation.md"
+TWITTER_READ_LOGGING_PLAN = ROOT / "docs/plans/2026-06-26-twitter-read-error-logging.md"
 
 
 def require(condition, message, failures):
@@ -110,6 +111,8 @@ def main():
         "HomeScreen/TweepPicture.swift",
         "HomeScreen/TweetsController.swift",
         "HomeScreenTests/HomeScreenTests.swift",
+        "scripts/check-privacy-contracts.py",
+        "scripts/test-privacy-contracts.py",
         "Fabric.framework/run",
         "Crashlytics.framework/run",
         "Crashlytics.framework/submit",
@@ -135,6 +138,7 @@ def main():
         "docs/plans/2026-06-15-share-post-generation.md",
         "docs/plans/2026-06-16-profile-image-generation.md",
         "docs/plans/2026-06-17-tweet-feed-generation.md",
+        "docs/plans/2026-06-26-twitter-read-error-logging.md",
     ]
 
     for relative_path in required_files:
@@ -189,6 +193,22 @@ def main():
     tweep_picture = read("HomeScreen/TweepPicture.swift")
     twitter_rest = read("HomeScreen/TwitterRESTAPI.swift")
     tweets_controller = read("HomeScreen/TweetsController.swift")
+    twitter_read_logging_plan = read("docs/plans/2026-06-26-twitter-read-error-logging.md")
+
+    for source_name, source in [
+        ("TweepPicture.swift", tweep_picture),
+        ("TwitterRESTAPI.swift", twitter_rest),
+        ("TweetsController.swift", tweets_controller),
+    ]:
+        require("localizedDescription" not in source and
+                'println(error)' not in source and
+                'println("Error: \\(connectionError)")' not in source and
+                'println("Error: \\(clientError)")' not in source,
+                f"{source_name} must not log raw Twitter read errors", failures)
+    require("status: completed" in twitter_read_logging_plan and
+            "four hostile mutations" in twitter_read_logging_plan and
+            "make check" in twitter_read_logging_plan,
+            "Twitter read logging plan must record completed verification", failures)
     url_helper = read("HomeScreen/URL.swift")
     hex_source = read("HomeScreen/Hex.swift")
     require("http://" not in swift,
@@ -382,8 +402,8 @@ def main():
             "ShareController must guard the Twitter session before reading the profile user name",
             failures)
     require("completion(result: [])" in twitter_rest and
-            "if let loginError = error" in twitter_rest and
-            "Twitter search login failed" in twitter_rest,
+            "Twitter search login failed" in twitter_rest and
+            "localizedDescription" not in twitter_rest,
             "Twitter search must complete safely when login, request, or connection setup fails",
             failures)
     setup_tweet_view = extract_braced_block(tweets_controller, "func setupView()")
@@ -476,6 +496,8 @@ def main():
             failures)
     require("override ROOT := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))" in makefile and '@python3 "$(ROOT)/scripts/check-baseline.py"' in makefile,
             "Makefile must invoke the checker through the loaded checkout root", failures)
+    require('@python3 "$(ROOT)/scripts/test-privacy-contracts.py"' in makefile,
+            "Makefile must run Twitter read privacy mutations", failures)
     require("absolute Makefile path" in readme and "any working directory" in readme,
             "README must document location-independent verification", failures)
     require("Make verification target derive the checkout root" in changes and "external directories" in changes,

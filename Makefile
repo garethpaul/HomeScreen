@@ -7,3 +7,4 @@ lint test build: check
 check:
 	@python3 "$(ROOT)/scripts/check-baseline.py"
 	@python3 "$(ROOT)/scripts/test-async-contracts.py"
+	@python3 "$(ROOT)/scripts/test-privacy-contracts.py"

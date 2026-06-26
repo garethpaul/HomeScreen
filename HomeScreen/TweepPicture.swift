@@ -52,13 +52,13 @@ func TweepPicture(handle: String, completion: (result: String?) -> Void) {
             }
 
             else {
-                println("Error: \(connectionError)")
+                println("Twitter profile lookup failed")
             }
             completion(result: nil)
         }
     }
     else {
-        println("Error: \(clientError)")
+        println("Twitter profile request could not be created")
         completion(result: nil)
     }
     

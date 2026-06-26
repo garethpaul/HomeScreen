@@ -1,5 +1,10 @@
 # Changes
 
+- Twitter profile, search, guest-login, and tweet-model failures now log stable
+  categories instead of raw transport, request, or localized error details.
+- Added a dedicated privacy checker and four hostile mutations to the canonical
+  Make gate.
+- Codex review for PR #12 returned HTTP 401 and was skipped after one attempt.
 - Screenshot requests now pass their high-quality Photos options, complete once
   on the main queue, and reject stale controller generations.
 - Legacy upload, status, and queued completion callbacks weakly own the share
