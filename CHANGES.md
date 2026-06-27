@@ -1,6 +1,7 @@
 # Changes
 
 - Preserved absolute Makefile roots containing spaces and added a recursive-safe full-baseline regression.
+- Rejected ambiguous Makefile inputs so later recipes cannot replace verification.
 - Twitter profile, search, guest-login, and tweet-model failures now log stable
   categories instead of raw transport, request, or localized error details.
 - Added a dedicated privacy checker and four hostile mutations to the canonical
