@@ -4,10 +4,19 @@ import sys
 
 
 ROOT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path(__file__).resolve().parents[1]
+sys.dont_write_bytecode = True  # importing swift_source must not litter scripts/__pycache__
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from swift_source import strip_swift_comments
 
 
 def read(relative_path):
-    return (ROOT / relative_path).read_text(encoding="utf-8", errors="replace")
+    # Blank Swift comments before any assertion. Read raw, a commented-out guard
+    # satisfies its own substring/count/ordering assertion while the code is dead.
+    # Non-Swift files are returned untouched.
+    text = (ROOT / relative_path).read_text(encoding="utf-8", errors="replace")
+    if str(relative_path).endswith(".swift"):
+        return strip_swift_comments(text)
+    return text
 
 
 def extract_braced_block(source, marker):
@@ -48,10 +57,20 @@ def main():
                 "options: options" in screenshot_request,
                 "Screenshot requests must pass the high-quality Photos options they configure",
                 failures)
+        # Pin the whole construct, not the bare fragments it is built from.
+        # Wrapping the guard in `if false { ... }` leaves every fragment
+        # byte-identical, live and UNCOMMENTED, so fragment presence passes --
+        # and so does comment stripping, because nothing is commented -- while
+        # the guard is dead and completion fires on every Photos callback. A
+        # contiguous pin spans the seam any wrapper's brace has to occupy.
         require("var completionDelivered = false" in screenshot_request and
-                "NSOperationQueue.mainQueue().addOperationWithBlock" in screenshot_request and
-                "if completionDelivered" in screenshot_request and
-                "completionDelivered = true" in screenshot_request,
+                "NSOperationQueue.mainQueue().addOperationWithBlock {\n"
+                "            if completionDelivered {\n"
+                "                return\n"
+                "            }\n"
+                "            completionDelivered = true\n"
+                "            completion(result: result)\n"
+                "        }" in screenshot_request,
                 "Screenshot completion must be serialized on main and delivered exactly once",
                 failures)
 
@@ -68,7 +87,11 @@ def main():
             "screenshotGeneration += 1" in share_screenshot_load and
             "let generation = screenshotGeneration" in share_screenshot_load and
             "getScreenshotImage(screenObj) { [weak self]" in share_screenshot_load and
-            "controller.screenshotGeneration != generation" in share_screenshot_load and
+            # whole construct: the stale-generation bail and the assignment it gates
+            "if controller.screenshotGeneration != generation {\n"
+            "                        return\n"
+            "                    }\n"
+            "                    if let screenshot = result {" in share_screenshot_load and
             "func invalidateScreenshotLoad()" in share and
             "invalidateScreenshotLoad()" in extract_braced_block(share, "override func viewWillDisappear(") ,
             "Share screenshots must be weakly owned and generation-bound to the visible composer",
@@ -93,7 +116,11 @@ def main():
             "screenshotGeneration += 1" in view_screenshot_load and
             "let generation = screenshotGeneration" in view_screenshot_load and
             "getScreenshotImage(screenObj) { [weak self]" in view_screenshot_load and
-            "controller.screenshotGeneration != generation" in view_screenshot_load,
+            # whole construct: the stale-generation bail and the assignment it gates
+            "if controller.screenshotGeneration != generation {\n"
+            "                        return\n"
+            "                    }\n"
+            "                    if let screenshot = result {" in view_screenshot_load,
             "Home screen image callbacks must be weakly owned and latest-generation only",
             failures)
 

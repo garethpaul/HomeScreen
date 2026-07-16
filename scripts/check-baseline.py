@@ -8,6 +8,9 @@ import sys
 import xml.etree.ElementTree as ET
 
 
+sys.dont_write_bytecode = True  # importing swift_source must not litter scripts/__pycache__
+from swift_source import strip_swift_comments
+
 ROOT = Path(__file__).resolve().parents[1]
 PLAN = ROOT / "docs/plans/2026-06-08-ios-sharing-baseline.md"
 MAKE_GATES_PLAN = ROOT / "docs/plans/2026-06-09-make-gate-aliases.md"
@@ -37,6 +40,25 @@ def require(condition, message, failures):
 
 
 def read(relative_path):
+    # Blank Swift comments before any assertion. Read raw, a commented-out guard
+    # satisfies its own substring/count/ordering assertion while the code is dead --
+    # verified: block-commenting Post.swift's exactly-once delivery guard left
+    # `make check` at exit 0 printing "7 hostile mutations rejected", while deleting
+    # the same guard IS caught. Non-Swift files (plists, project files) are returned
+    # untouched.
+    text = (ROOT / relative_path).read_text(encoding="utf-8", errors="replace")
+    if str(relative_path).endswith(".swift"):
+        return strip_swift_comments(text)
+    return text
+
+
+def read_raw(relative_path):
+    """Read a file untouched, comments included.
+
+    Only for assertions that are genuinely ABOUT comment text -- e.g. requiring a
+    note that documents a removal. Code assertions must use read(), which strips
+    comments, or a commented-out guard satisfies its own assertion.
+    """
     return (ROOT / relative_path).read_text(encoding="utf-8", errors="replace")
 
 
@@ -190,6 +212,8 @@ def main():
     active_upload = read("HomeScreen/Upload.swift")
     update_status = read("HomeScreen/UpdateStatus.swift")
     legacy_upload = read("HomeScreen/UploadMedia.swift")
+    # This note lives in a comment, so it must be asserted against raw text.
+    legacy_upload_raw = read_raw("HomeScreen/UploadMedia.swift")
     upload = active_upload + legacy_upload
     tweep_picture = read("HomeScreen/TweepPicture.swift")
     twitter_rest = read("HomeScreen/TwitterRESTAPI.swift")
@@ -244,7 +268,7 @@ def main():
             failures)
     require("statuses/update_with_media.json" not in swift and
             "func UploadMedia(media: NSData" not in legacy_upload and
-            "deprecated statuses/update_with_media helper was removed" in legacy_upload,
+            "deprecated statuses/update_with_media helper was removed" in legacy_upload_raw,
             "Deprecated update_with_media helper must stay removed",
             failures)
     require("https://upload.twitter.com/1.1/media/upload.json" in active_upload,

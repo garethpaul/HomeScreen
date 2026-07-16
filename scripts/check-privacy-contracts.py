@@ -4,10 +4,19 @@ import sys
 
 
 ROOT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path(__file__).resolve().parents[1]
+sys.dont_write_bytecode = True  # importing swift_source must not litter scripts/__pycache__
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from swift_source import strip_swift_comments
 
 
 def read(relative_path):
-    return (ROOT / relative_path).read_text(encoding="utf-8", errors="replace")
+    # Blank Swift comments before any assertion. Read raw, a commented-out guard
+    # satisfies its own substring/count/ordering assertion while the code is dead.
+    # Non-Swift files are returned untouched.
+    text = (ROOT / relative_path).read_text(encoding="utf-8", errors="replace")
+    if str(relative_path).endswith(".swift"):
+        return strip_swift_comments(text)
+    return text
 
 
 def main():
